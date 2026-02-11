@@ -1,13 +1,18 @@
 import { Modal, App } from 'obsidian';
 
 export class HelpModal extends Modal {
-    constructor(app: App) {
+    constructor(app: App, private spellCheckLanguage: string = 'en') {
         super(app);
         this.setTitle('📖 Perplexity Vault Assistant - Help');
     }
 
     onOpen() {
         const contentEl = this.contentEl;
+
+        // Add RTL support only for Arabic language
+        if (this.spellCheckLanguage === 'ar') {
+            contentEl.addClass('rtl-content');
+        }
 
         contentEl.createEl('h2', { text: '📚 Documentation' });
 

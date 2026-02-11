@@ -71,6 +71,16 @@ export interface PerplexityPluginSettings {
     vaultFullModeChunkSize: number;
     vaultAutoModeThreshold: number;
     allowModeSwitching: boolean;
+
+    // Phase 3: User Experience settings
+    showProgressIndicators: boolean;
+    enableKeyboardShortcuts: boolean;
+    toastDuration: number;
+    themeMode: 'auto' | 'dark' | 'light';
+
+    // Sidebar View settings
+    showSidebarView: boolean;
+    sidebarViewPosition: 'left' | 'right';
 }
 
 export interface VaultAnalysisResult {

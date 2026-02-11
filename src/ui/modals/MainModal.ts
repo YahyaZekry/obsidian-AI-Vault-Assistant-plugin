@@ -11,6 +11,11 @@ export class PerplexityMainModal extends Modal {
     onOpen() {
         const contentEl = this.contentEl;
 
+        // Add RTL support only for Arabic language
+        if (this.plugin.settings.spellCheckLanguage === 'ar') {
+            contentEl.addClass('rtl-content');
+        }
+
         contentEl.createEl('h2', { text: 'Perplexity Vault Assistant' });
 
         new Setting(contentEl)
@@ -51,7 +56,7 @@ export class PerplexityMainModal extends Modal {
                 .setButtonText('Open Help')
                 .onClick(() => {
                     this.close();
-                    new HelpModal(this.app).open();
+                    new HelpModal(this.app, this.plugin.settings.spellCheckLanguage).open();
                 }));
     }
 

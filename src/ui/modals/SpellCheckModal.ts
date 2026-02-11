@@ -20,6 +20,11 @@ export class SpellCheckEnhancementModal extends Modal {
     onOpen() {
         const contentEl = this.contentEl;
 
+        // Add RTL support only for Arabic language
+        if (this.plugin.settings.spellCheckLanguage === 'ar') {
+            contentEl.addClass('rtl-content');
+        }
+
         contentEl.createEl('h2', { text: 'Spell Check & Enhancement Options' });
 
         const activeFile = this.app.workspace.getActiveFile();

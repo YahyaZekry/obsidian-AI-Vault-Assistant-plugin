@@ -1,13 +1,18 @@
 import { Modal, App, Notice, MarkdownView, TFile } from 'obsidian';
 
 export class SmartLinksModal extends Modal {
-    constructor(app: App, private currentFile: TFile, private suggestions: any[]) {
+    constructor(app: App, private currentFile: TFile, private suggestions: any[], private spellCheckLanguage: string = 'en') {
         super(app);
         this.setTitle(`Smart Links for: ${this.currentFile.basename}`);
     }
 
     onOpen() {
         const contentEl = this.contentEl;
+
+        // Add RTL support only for Arabic language
+        if (this.spellCheckLanguage === 'ar') {
+            contentEl.addClass('rtl-content');
+        }
 
         if (this.suggestions.length === 0) {
             contentEl.createEl('p', { text: 'No smart link suggestions found.' });

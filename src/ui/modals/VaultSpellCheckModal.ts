@@ -1,12 +1,17 @@
 import { Modal, App } from 'obsidian';
 
 export class VaultAnalysisModal extends Modal {
-    constructor(app: App, private analysis: any) {
+    constructor(app: App, private analysis: any, private spellCheckLanguage: string = 'en') {
         super(app);
     }
 
     onOpen() {
         const contentEl = this.contentEl;
+
+        // Add RTL support only for Arabic language
+        if (this.spellCheckLanguage === 'ar') {
+            contentEl.addClass('rtl-content');
+        }
 
         contentEl.createEl('h2', { text: '📊 Vault Analysis Results' });
 

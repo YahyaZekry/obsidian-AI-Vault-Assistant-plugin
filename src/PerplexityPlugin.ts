@@ -1,4 +1,4 @@
-import { Plugin, Notice, TFile, App } from 'obsidian';
+import { Plugin, Notice, TFile, App, WorkspaceLeaf } from 'obsidian';
 import { PerplexitySettingTab } from './settings/SettingsTab';
 import { CacheManager } from './services/CacheManager';
 import { VaultAnalyzer } from './services/VaultAnalyzer';
@@ -6,97 +6,10 @@ import { PerplexityService } from './services/PerplexityService';
 import { PerplexityMainModal } from './ui/modals/MainModal';
 import { VaultAnalysisModal } from './ui/modals/VaultSpellCheckModal';
 import { SmartLinksModal } from './ui/modals/ModelRecommendationsModal';
+import { SidebarView, SIDEBAR_VIEW_TYPE } from './ui/SidebarView';
 import { migrate } from './settings/migration';
-
-interface SpellCheckResult {
-    corrections: Array<{
-        original: string;
-        suggested: string;
-        line: number;
-        confidence: number;
-        context?: string;
-    }>;
-    formattingIssues: Array<{
-        issue: string;
-        line: number;
-        suggestion: string;
-        fixable: boolean;
-        originalText?: string;
-        suggestedText?: string;
-    }>;
-}
-
-interface SpellCheckContext {
-    settings?: PerplexityPluginSettings;
-    onProgress?: (progress: number, message: string) => void;
-    onSectionComplete?: (section: number, total: number, result: SpellCheckResult) => void;
-    onModeSwitchSuggestion?: (suggestedMode: string, reason: string) => void;
-}
-
-type SpellCheckMode = 'auto' | 'full' | 'incremental';
-
-interface PerplexityPluginSettings {
-    version: number;
-    apiKey: string;
-    spellCheckLanguage: string;
-    similarityThreshold: number;
-    batchSize: number;
-    cacheEnabled: boolean;
-    cacheDuration: number;
-    autoFormat: boolean;
-    smartLinking: boolean;
-    rtlSupport: boolean;
-    excludedExtensions: string[];
-    smartLinkingMode: 'current' | 'all';
-    maxLinkSuggestions: number;
-    showLinkReasoning: boolean;
-    spellCheckModel: string;
-    linkAnalysisModel: string;
-    spellCheckScope: 'current' | 'vault';
-    enhancedRewriteModel: string;
-    spellCheckPrompt: 'standard' | 'superprompt';
-
-    spellCheckMode: SpellCheckMode;
-    fullModeChunkSize: number;
-    fullModeShowProgress: boolean;
-    autoModeThreshold: number;
-    incrementalModeSectionSize: number;
-    vaultSpellCheckMode: SpellCheckMode;
-    vaultFullModeChunkSize: number;
-    vaultAutoModeThreshold: number;
-    allowModeSwitching: boolean;
-}
-
-const DEFAULT_SETTINGS: PerplexityPluginSettings = {
-    version: 2,
-    apiKey: '',
-    spellCheckLanguage: 'en',
-    similarityThreshold: 0.7,
-    batchSize: 10,
-    cacheEnabled: true,
-    cacheDuration: 24 * 60 * 60 * 1000,
-    autoFormat: true,
-    smartLinking: true,
-    rtlSupport: false,
-    excludedExtensions: ['pdf', 'docx', 'xlsx', 'pptx', 'zip', 'rar', 'exe', 'img', 'png', 'jpg', 'jpeg', 'gif'],
-    smartLinkingMode: 'current',
-    maxLinkSuggestions: 10,
-    showLinkReasoning: true,
-    spellCheckModel: 'sonar',
-    linkAnalysisModel: 'sonar-pro',
-    spellCheckScope: 'current',
-    enhancedRewriteModel: 'sonar-reasoning-pro',
-    spellCheckPrompt: 'standard',
-    spellCheckMode: 'incremental',
-    fullModeChunkSize: 4000,
-    fullModeShowProgress: true,
-    autoModeThreshold: 3,
-    incrementalModeSectionSize: 5000,
-    vaultSpellCheckMode: 'full',
-    vaultFullModeChunkSize: 4000,
-    vaultAutoModeThreshold: 2,
-    allowModeSwitching: true,
-};
+import { PerplexityPluginSettings, SpellCheckResult, SpellCheckContext, SpellCheckMode } from './types/index';
+import { DEFAULT_SETTINGS } from './settings/defaults';
 
 export class PerplexityPlugin extends Plugin {
     settings: PerplexityPluginSettings;
@@ -106,15 +19,24 @@ export class PerplexityPlugin extends Plugin {
 
     async onload() {
         console.log('🚀 Perplexity Vault Assistant Plugin loading...');
-        
+
         await this.loadSettings();
-        
+
         this.addSettingTab(new PerplexitySettingTab(this.app, this));
-        
+
         this.cacheManager = new CacheManager(this.app);
         this.vaultAnalyzer = new VaultAnalyzer(this.app, this.cacheManager, this.settings);
         this.perplexityService = new PerplexityService(this.cacheManager, this.settings);
 
+        // Register sidebar view
+        this.registerView(SIDEBAR_VIEW_TYPE, (leaf) => new SidebarView(leaf, this));
+
+        // Add PRIMARY ribbon icon for sidebar view (main way to access plugin)
+        this.addRibbonIcon('layout-sidebar-right', 'Open Perplexity Sidebar', () => {
+            this.activateSidebarView();
+        });
+
+        // Add brain icon ribbon for quick modal access
         this.addRibbonIcon('brain', 'Perplexity Assistant', () => {
             new PerplexityMainModal(this.app, this).open();
         });
@@ -135,6 +57,12 @@ export class PerplexityPlugin extends Plugin {
             id: 'perplexity-smart-links',
             name: 'Generate Smart Links',
             callback: () => this.generateSmartLinks()
+        });
+
+        this.addCommand({
+            id: 'perplexity-open-sidebar',
+            name: 'Open Perplexity Sidebar',
+            callback: () => this.activateSidebarView()
         });
 
         console.log('✅ Plugin loaded successfully');
@@ -165,11 +93,11 @@ export class PerplexityPlugin extends Plugin {
 
         try {
             const analysis = await this.vaultAnalyzer.analyzeVault();
-            
+
             notice.hide();
             new Notice(`✅ Vault analyzed: ${analysis.markdownFiles} markdown files with themes: ${analysis.themes.join(', ')}`);
-            
-            new VaultAnalysisModal(this.app, analysis).open();
+
+            new VaultAnalysisModal(this.app, analysis, this.settings.spellCheckLanguage).open();
         } catch (error) {
             notice.hide();
             new Notice(`❌ Analysis failed: ${error.message}`);
@@ -193,11 +121,11 @@ export class PerplexityPlugin extends Plugin {
         try {
             const mode = this.settings.smartLinkingMode || 'current';
             const suggestions = await this.vaultAnalyzer.generateSmartLinks(mode);
-            
+
             notice.hide();
             new Notice(`✅ Generated ${suggestions.length} smart link suggestions`);
-            
-            new SmartLinksModal(this.app, activeFile, suggestions).open();
+
+            new SmartLinksModal(this.app, activeFile, suggestions, this.settings.spellCheckLanguage).open();
         } catch (error) {
             notice.hide();
             new Notice(`❌ Smart links failed: ${error.message}`);
@@ -212,6 +140,21 @@ export class PerplexityPlugin extends Plugin {
             hash = hash & hash;
         }
         return Math.abs(hash).toString(36);
+    }
+
+    activateSidebarView() {
+        const existingLeaf = this.app.workspace.getLeavesOfType(SIDEBAR_VIEW_TYPE)[0];
+        if (existingLeaf) {
+            this.app.workspace.revealLeaf(existingLeaf);
+        } else {
+            const leaf = this.app.workspace.getRightLeaf(false);
+            if (leaf) {
+                leaf.setViewState({
+                    type: SIDEBAR_VIEW_TYPE,
+                    active: true,
+                });
+            }
+        }
     }
 
     onunload() {

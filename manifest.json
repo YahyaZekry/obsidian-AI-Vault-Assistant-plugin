@@ -9,5 +9,12 @@
   "fundingUrl": {
     "Buy Me a Coffee": "https://buymeacoffee.com/YahyaZekry"
   },
-  "isDesktopOnly": false
+  "isDesktopOnly": false,
+  "views": {
+    "perplexity-sidebar": {
+      "type": "perplexity-sidebar",
+      "name": "Perplexity Sidebar",
+      "icon": "brain"
+    }
+  }
 }

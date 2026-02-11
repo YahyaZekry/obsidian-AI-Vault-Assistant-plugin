@@ -31,4 +31,14 @@ export const DEFAULT_SETTINGS: PerplexityPluginSettings = {
     vaultFullModeChunkSize: 4000,
     vaultAutoModeThreshold: 2,
     allowModeSwitching: true,
+
+    // Phase 3: User Experience defaults
+    showProgressIndicators: true,
+    enableKeyboardShortcuts: true,
+    toastDuration: 5000,
+    themeMode: 'auto',
+
+    // Sidebar View defaults
+    showSidebarView: true,
+    sidebarViewPosition: 'right' as 'left' | 'right',
 };
