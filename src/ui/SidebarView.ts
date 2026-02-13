@@ -30,7 +30,7 @@ export class SidebarView extends ItemView {
     }
 
     public getIcon(): string {
-        return 'sparkles';
+        return 'brain';
     }
 
     public async onOpen(): Promise<void> {
@@ -73,8 +73,27 @@ export class SidebarView extends ItemView {
         container.empty();
         container.addClass('perplexity-sidebar');
 
+        // Check if RTL is enabled (Arabic language)
+        const isRTL = this.plugin.settings.spellCheckLanguage === 'ar';
+        
+        // Debug logging for RTL
+        console.log('[Perplexity] RTL check:', {
+            language: this.plugin.settings.spellCheckLanguage,
+            isRTL: isRTL
+        });
+
+        // Apply RTL to the main container element for proper inheritance
+        if (isRTL) {
+            container.setAttr('dir', 'rtl');
+            console.log('[Perplexity] RTL applied to main container');
+        } else {
+            container.removeAttribute('dir');
+        }
+
         // Main container
-        const mainContainer = container.createDiv({ cls: 'sidebar-container' });
+        const mainContainer = container.createDiv({ 
+            cls: 'sidebar-container'
+        });
 
         // Header section
         const header = mainContainer.createDiv({ cls: 'sidebar-header' });
@@ -135,49 +154,56 @@ export class SidebarView extends ItemView {
         const header = section.createDiv({ cls: 'card-header' });
         header.createSpan({ cls: 'card-title', text: 'Spell Check Results' });
 
-        if (!this.spellCheckResults || this.spellCheckResults.corrections.length === 0) {
+        if (!this.spellCheckResults || (this.spellCheckResults.corrections.length === 0 && this.spellCheckResults.formattingIssues.length === 0)) {
             this.renderNoCorrections(section);
             return;
         }
 
-        const { corrections } = this.spellCheckResults;
+        const { corrections, formattingIssues } = this.spellCheckResults;
         const pendingCorrections = corrections.filter((_, idx) => !this.appliedCorrections.has(idx));
 
-        if (pendingCorrections.length === 0) {
+        if (pendingCorrections.length === 0 && formattingIssues.length === 0) {
             this.renderAllApplied(section);
             return;
         }
 
-        // Action buttons
-        const actions = section.createDiv({ cls: 'spell-check-actions' });
+        // Action buttons (only show if there are corrections)
+        if (pendingCorrections.length > 0) {
+            const actions = section.createDiv({ cls: 'spell-check-actions' });
 
-        const applyAllBtn = actions.createEl('button', { 
-            cls: 'btn btn-primary btn-small',
-            text: 'Apply All' 
-        });
-        applyAllBtn.addEventListener('click', () => this.applyAllCorrections());
+            const applyAllBtn = actions.createEl('button', { 
+                cls: 'btn btn-primary btn-small',
+                text: 'Apply All' 
+            });
+            applyAllBtn.addEventListener('click', () => this.applyAllCorrections());
 
-        const applySelectedBtn = actions.createEl('button', { 
-            cls: 'btn btn-secondary btn-small',
-            text: 'Apply Selected' 
-        });
-        applySelectedBtn.addEventListener('click', () => this.applySelectedCorrections());
+            const applySelectedBtn = actions.createEl('button', { 
+                cls: 'btn btn-secondary btn-small',
+                text: 'Apply Selected' 
+            });
+            applySelectedBtn.addEventListener('click', () => this.applySelectedCorrections());
 
-        const undoBtn = actions.createEl('button', { 
-            cls: 'btn btn-ghost btn-small',
-            text: '↩ Undo' 
-        });
-        undoBtn.addEventListener('click', () => this.undoLastAction());
+            const undoBtn = actions.createEl('button', { 
+                cls: 'btn btn-ghost btn-small',
+                text: '↩ Undo' 
+            });
+            undoBtn.addEventListener('click', () => this.undoLastAction());
 
-        // Corrections list
-        const correctionsList = section.createDiv({ cls: 'corrections-list' });
+            // Corrections list
+            const correctionsList = section.createDiv({ cls: 'corrections-list' });
 
-        corrections.forEach((correction, index) => {
-            if (this.appliedCorrections.has(index)) {
-                return;
-            }
-            this.renderCorrectionItem(correctionsList, correction, index);
-        });
+            corrections.forEach((correction, index) => {
+                if (this.appliedCorrections.has(index)) {
+                    return;
+                }
+                this.renderCorrectionItem(correctionsList, correction, index);
+            });
+        }
+
+        // Formatting issues section
+        if (formattingIssues && formattingIssues.length > 0) {
+            this.renderFormattingIssues(section, formattingIssues);
+        }
     }
 
     private renderNoCorrections(container: HTMLElement): void {
@@ -248,13 +274,49 @@ export class SidebarView extends ItemView {
         const confidence = content.createDiv({ cls: 'correction-confidence' });
         const confidenceLabel = confidence.createDiv({ cls: 'confidence-label', text: 'Confidence' });
         const confidenceBar = confidence.createDiv({ cls: 'confidence-bar-container' });
+        
+        // Determine confidence color based on score
+        // API returns confidence as decimal (0-1), convert to percentage (0-100)
+        let confidenceScore = correction.confidence || 0;
+        
+        // Debug logging for confidence values
+        console.log('[Perplexity] Confidence value:', {
+            original: correction.confidence,
+            processed: confidenceScore,
+            type: typeof correction.confidence
+        });
+        
+        // If confidence is a decimal (0-1), convert to percentage
+        if (confidenceScore > 0 && confidenceScore <= 1) {
+            confidenceScore = confidenceScore * 100;
+        }
+        
+        let confidenceColor = 'var(--color-blue-500)';
+        let confidenceColorEnd = 'var(--color-blue-600)';
+        let confidenceValueColor = 'var(--color-blue-600)';
+        
+        if (confidenceScore >= 80) {
+            confidenceColor = 'var(--color-success-500)';
+            confidenceColorEnd = 'var(--color-success-600)';
+            confidenceValueColor = 'var(--color-success-600)';
+        } else if (confidenceScore >= 60) {
+            confidenceColor = 'var(--color-warning-500)';
+            confidenceColorEnd = 'var(--color-warning-600)';
+            confidenceValueColor = 'var(--color-warning-600)';
+        } else {
+            confidenceColor = 'var(--color-error-500)';
+            confidenceColorEnd = 'var(--color-error-600)';
+            confidenceValueColor = 'var(--color-error-600)';
+        }
+        
         const confidenceFill = confidenceBar.createDiv({ 
             cls: 'confidence-bar-fill',
-            attr: { style: `width: ${correction.confidence}%` }
+            attr: { style: `width: ${confidenceScore}%; background: linear-gradient(90deg, ${confidenceColor}, ${confidenceColorEnd});` }
         });
         const confidenceValue = confidence.createDiv({ 
             cls: 'confidence-value',
-            text: `${Math.round(correction.confidence)}%`
+            attr: { style: `color: ${confidenceValueColor}` },
+            text: `${Math.round(confidenceScore)}%`
         });
 
         // Apply button
@@ -270,6 +332,88 @@ export class SidebarView extends ItemView {
             const context = item.createDiv({ cls: 'correction-context' });
             context.createDiv({ cls: 'context-label', text: 'Context' });
             context.createDiv({ cls: 'context-text', text: correction.context });
+        }
+    }
+
+    private renderFormattingIssues(container: HTMLElement, formattingIssues: any[]): void {
+        const section = container.createDiv({ cls: 'formatting-issues-section' });
+        const header = section.createDiv({ cls: 'formatting-issues-header' });
+        header.createSpan({ cls: 'formatting-issues-title', text: '⚠️ Formatting Issues' });
+        header.createSpan({ cls: 'formatting-issues-count', text: `${formattingIssues.length} found` });
+
+        const issuesList = section.createDiv({ cls: 'formatting-issues-list' });
+
+        formattingIssues.forEach((issue, index) => {
+            this.renderFormattingIssueItem(issuesList, issue, index);
+        });
+    }
+
+    private renderFormattingIssueItem(container: HTMLElement, issue: any, index: number): void {
+        const item = container.createDiv({ cls: 'formatting-issue-item' });
+
+        // Issue header with line number
+        const issueHeader = item.createDiv({ cls: 'formatting-issue-header' });
+        issueHeader.createSpan({ cls: 'formatting-issue-type', text: issue.type || 'Formatting' });
+        if (issue.line) {
+            issueHeader.createSpan({ cls: 'formatting-issue-line', text: `Line ${issue.line}` });
+        }
+
+        // Issue description
+        const description = item.createDiv({ cls: 'formatting-issue-description' });
+        description.createDiv({ cls: 'formatting-issue-label', text: 'Issue' });
+        description.createDiv({ cls: 'formatting-issue-text', text: issue.description || issue.message || 'Formatting issue detected' });
+
+        // Suggestion if available
+        if (issue.suggestion) {
+            const suggestion = item.createDiv({ cls: 'formatting-issue-suggestion' });
+            suggestion.createDiv({ cls: 'formatting-issue-label', text: 'Suggestion' });
+            suggestion.createDiv({ cls: 'formatting-issue-suggestion-text', text: issue.suggestion });
+        }
+
+        // Apply button if fixable
+        if (issue.fixable && issue.line) {
+            const action = item.createDiv({ cls: 'formatting-issue-action' });
+            const applyBtn = action.createEl('button', { 
+                cls: 'btn btn-small btn-warning',
+                text: 'Fix' 
+            });
+            applyBtn.addEventListener('click', () => this.applyFormattingFix(index, issue));
+        }
+    }
+
+    private async applyFormattingFix(index: number, issue: any): Promise<void> {
+        if (!this.currentFile || this.isProcessing) {
+            return;
+        }
+
+        this.isProcessing = true;
+
+        try {
+            const content = await this.app.vault.read(this.currentFile);
+            const lines = content.split('\n');
+
+            if (issue.line > 0 && issue.line <= lines.length && issue.suggestion) {
+                // Save for undo
+                this.undoHistory.push({ file: this.currentFile, content });
+
+                // Apply the fix
+                lines[issue.line - 1] = issue.suggestion;
+
+                const newContent = lines.join('\n');
+                await this.app.vault.modify(this.currentFile, newContent);
+
+                // Remove the issue from the list
+                if (this.spellCheckResults) {
+                    this.spellCheckResults.formattingIssues.splice(index, 1);
+                }
+
+                this.refresh();
+                new Notice('Formatting fix applied successfully');
+            }
+        } catch (error) {
+            new Notice('Failed to apply formatting fix: ' + (error as Error).message);
+        } finally {
+            this.isProcessing = false;
         }
     }
 
