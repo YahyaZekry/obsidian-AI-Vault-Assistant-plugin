@@ -108,10 +108,13 @@
    Sidebar View Styles
    =================================== */
 
-.perplexity-sidebar {
-    width: 100%;
-    min-width: 250px;
-    max-width: 600px;
+/* Target both direct class and Obsidian's sidebar structure */
+.perplexity-sidebar,
+.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content,
+.nav-folder:has(.perplexity-sidebar) {
+    width: 100% !important;
+    min-width: 280px !important;
+    max-width: 500px !important;
     height: 100%;
     padding: var(--spacing-md);
     overflow-y: auto;
@@ -121,6 +124,21 @@
     color: var(--color-slate-700);
     background-color: var(--color-slate-50);
     box-sizing: border-box;
+    margin: 0 auto !important;
+}
+
+/* Ensure the view-content wrapper doesn't override our constraints */
+.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 !important;
+}
+
+.workspace-leaf-content[data-type="perplexity-sidebar-view"] .perplexity-sidebar {
+    flex: 0 0 auto;
+    width: 100% !important;
+    max-width: 500px !important;
 }
 
 .sidebar-container {
@@ -338,6 +356,12 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+.correction-item > * {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .correction-item:hover {
@@ -480,6 +504,13 @@
     background-color: var(--color-slate-100);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .context-label {
@@ -492,6 +523,29 @@
     color: var(--color-slate-500);
     font-style: italic;
     line-height: 1.4;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* In RTL mode, English text should remain LTR for readability */
+[dir="rtl"] .original-text,
+[dir="rtl"] .suggested-text {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+/* Context in RTL should allow mixed text */
+[dir="rtl"] .context-text {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* ===================================
@@ -710,8 +764,17 @@
     RTL Support
     =================================== */
 
-/* Base RTL container styles */
-.perplexity-sidebar[dir="rtl"] {
+/* Base RTL container styles - target multiple selectors for specificity */
+.perplexity-sidebar[dir="rtl"],
+.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content[dir="rtl"],
+[dir="rtl"].perplexity-sidebar {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Ensure RTL is applied even if set on parent container */
+.workspace-leaf-content[data-type="perplexity-sidebar-view"][dir="rtl"] .view-content,
+.workspace-leaf-content[data-type="perplexity-sidebar-view"] [dir="rtl"] {
     direction: rtl !important;
     text-align: right !important;
 }
@@ -794,7 +857,9 @@
 }
 
 [dir="rtl"] .correction-section {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .correction-section.original {
@@ -814,15 +879,21 @@
 }
 
 [dir="rtl"] .correction-text {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .original-text {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .suggested-text {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .correction-confidence {
@@ -843,7 +914,9 @@
 }
 
 [dir="rtl"] .correction-context {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .context-label {
@@ -851,7 +924,9 @@
 }
 
 [dir="rtl"] .context-text {
-    text-align: right;
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .correction-action {
@@ -926,11 +1001,7 @@
    =================================== */
 
 /* Base responsive styles - all widths */
-.perplexity-sidebar {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
+/* Note: max-width is already set to 500px in the main .perplexity-sidebar rule */
 
 .sidebar-container {
     width: 100%;
@@ -1206,9 +1277,14 @@
     border: 1px solid var(--color-slate-200);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
-    max-width: 600px;
+    min-width: 280px;
+    max-width: 500px;
+    width: 100%;
     max-height: 80vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .modal-content {
@@ -1216,6 +1292,10 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     font-size: var(--font-size-base);
     color: var(--color-slate-700);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* Modal Header */
@@ -1258,6 +1338,9 @@
     line-height: 1.5;
     color: var(--color-slate-600);
     margin-bottom: var(--spacing-sm);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
 }
 
 .modal ul,
@@ -1400,6 +1483,11 @@
     border: 1px solid var(--color-slate-200);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 .spell-check-item:hover {
@@ -1427,6 +1515,11 @@
     background-color: var(--color-slate-100);
     border-radius: var(--radius-sm);
     border-left: 3px solid var(--color-blue-500);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 .error-context strong {
@@ -1479,6 +1572,11 @@
     border-radius: var(--radius-md);
     border-left: 3px solid var(--color-warning-500);
     transition: all var(--transition-fast);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 .formatting-item:hover {
@@ -1826,6 +1924,21 @@
 
 [dir="rtl"] .modal {
     text-align: right;
+    /* Container has RTL direction, but text elements use unicode-bidi: isolate */
+    direction: rtl !important;
+}
+
+/* RTL text classes for modal content */
+.rtl-text {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+.rtl-content {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 [dir="rtl"] .modal ul,
@@ -1909,6 +2022,55 @@
 
 [dir="rtl"] .formatting-issue-action {
     justify-content: flex-start;
+}
+
+/* RTL for Spell Check Results Modal items */
+[dir="rtl"] .spell-check-item {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] .spell-check-item h4 {
+    text-align: right !important;
+}
+
+[dir="rtl"] .spell-check-item p {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] .error-context {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] .error-context strong {
+    text-align: right !important;
+}
+
+[dir="rtl"] .error-context .context-text {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] .formatting-item {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
+}
+
+[dir="rtl"] .formatting-item h4 {
+    text-align: right !important;
+}
+
+[dir="rtl"] .formatting-item p {
+    text-align: right !important;
+    /* Don't force RTL direction - let text flow naturally based on content */
+    unicode-bidi: isolate;
 }
 
 /* ===================================

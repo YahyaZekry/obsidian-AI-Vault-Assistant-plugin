@@ -27,7 +27,12 @@ export class SpellCheckResultsModal extends Modal {
 
     onOpen() {
         const contentEl = this.contentEl;
-        const isRTL = this.plugin.settings.rtlSupport || false;
+        const isRTL = this.plugin.settings.rtlSupport || this.plugin.settings.spellCheckLanguage === 'ar';
+
+        // Apply RTL direction to the modal container
+        if (isRTL) {
+            contentEl.setAttr('dir', 'rtl');
+        }
 
         if (this.result.corrections?.length > 0) {
             contentEl.createEl('h3', { text: `📝 Spelling Corrections (${this.result.corrections.length})` });

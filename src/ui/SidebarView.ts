@@ -73,27 +73,46 @@ export class SidebarView extends ItemView {
         container.empty();
         container.addClass('perplexity-sidebar');
 
-        // Check if RTL is enabled (Arabic language)
-        const isRTL = this.plugin.settings.spellCheckLanguage === 'ar';
+        // Check if RTL is enabled (Arabic language or RTL support setting)
+        const isRTL = this.plugin.settings.spellCheckLanguage === 'ar' || this.plugin.settings.rtlSupport;
         
         // Debug logging for RTL
         console.log('[Perplexity] RTL check:', {
             language: this.plugin.settings.spellCheckLanguage,
+            rtlSupport: this.plugin.settings.rtlSupport,
             isRTL: isRTL
         });
 
         // Apply RTL to the main container element for proper inheritance
         if (isRTL) {
             container.setAttr('dir', 'rtl');
+            // Also apply inline style as fallback
+            container.style.direction = 'rtl';
+            container.style.textAlign = 'right';
             console.log('[Perplexity] RTL applied to main container');
         } else {
             container.removeAttribute('dir');
+            container.style.direction = '';
+            container.style.textAlign = '';
         }
+
+        // Apply inline styles as fallback for max-width (Obsidian may override CSS)
+        container.style.maxWidth = '500px';
+        container.style.minWidth = '280px';
+        container.style.margin = '0 auto';
+        container.style.boxSizing = 'border-box';
 
         // Main container
         const mainContainer = container.createDiv({ 
             cls: 'sidebar-container'
         });
+        
+        // Also apply RTL to inner container for proper inheritance
+        if (isRTL) {
+            mainContainer.setAttr('dir', 'rtl');
+            mainContainer.style.direction = 'rtl';
+            mainContainer.style.textAlign = 'right';
+        }
 
         // Header section
         const header = mainContainer.createDiv({ cls: 'sidebar-header' });
