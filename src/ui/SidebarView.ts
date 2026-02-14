@@ -158,7 +158,7 @@ export class SidebarView extends ItemView {
         fileName.createSpan({ cls: 'file-icon', text: '📄' });
         fileName.createSpan({ cls: 'file-name', text: this.currentFile!.basename });
 
-        const stats = fileInfo.createDiv({ cls: 'file-info-stats debug-stats' });
+        const stats = fileInfo.createDiv({ cls: 'file-info-stats' });
 
         if (this.spellCheckResults) {
             const totalCorrections = this.spellCheckResults.corrections.length;
@@ -196,7 +196,7 @@ export class SidebarView extends ItemView {
 
         // Action buttons (only show if there are corrections)
         if (pendingCorrections.length > 0) {
-            const actions = section.createDiv({ cls: 'spell-check-actions debug-actions' });
+            const actions = section.createDiv({ cls: 'spell-check-actions' });
 
             const applyAllBtn = actions.createEl('button', { 
                 cls: 'btn btn-primary btn-small',
@@ -262,10 +262,10 @@ export class SidebarView extends ItemView {
         });
 
         // Main content wrapper (50% width) - contains checkbox, content, and apply button
-        const mainContent = item.createDiv({ cls: 'correction-main-content debug-main-content' });
+        const mainContent = item.createDiv({ cls: 'correction-main-content' });
 
         // Checkbox
-        const checkboxWrapper = mainContent.createDiv({ cls: 'correction-checkbox debug-checkbox' });
+        const checkboxWrapper = mainContent.createDiv({ cls: 'correction-checkbox' });
         const checkbox = checkboxWrapper.createEl('input', { 
             type: 'checkbox',
             cls: 'correction-checkbox-input'
@@ -282,7 +282,7 @@ export class SidebarView extends ItemView {
         });
 
         // Content
-        const content = mainContent.createDiv({ cls: 'correction-content debug-content' });
+        const content = mainContent.createDiv({ cls: 'correction-content' });
 
         // Original text
         const originalSection = content.createDiv({ cls: 'correction-section original' });
@@ -350,7 +350,7 @@ export class SidebarView extends ItemView {
         });
 
         // Apply button
-        const action = mainContent.createDiv({ cls: 'correction-action debug-apply' });
+        const action = mainContent.createDiv({ cls: 'correction-action' });
         const applyBtn = action.createEl('button', { 
             cls: 'btn btn-small btn-apply',
             text: 'Apply' 
@@ -359,7 +359,7 @@ export class SidebarView extends ItemView {
 
         // Context if available (50% width)
         if (correction.context) {
-            const context = item.createDiv({ cls: 'correction-context debug-context' });
+            const context = item.createDiv({ cls: 'correction-context' });
             context.createDiv({ cls: 'context-label', text: 'Context' });
             context.createDiv({ cls: 'context-text', text: correction.context });
         }
@@ -379,7 +379,7 @@ export class SidebarView extends ItemView {
     }
 
     private renderFormattingIssueItem(container: HTMLElement, issue: any, index: number): void {
-        const item = container.createDiv({ cls: 'formatting-issue-item debug-format' });
+        const item = container.createDiv({ cls: 'formatting-issue-item' });
 
         // Issue header with line number
         const issueHeader = item.createDiv({ cls: 'formatting-issue-header' });

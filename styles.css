@@ -2,171 +2,6 @@
    Perplexity Plugin - Professional Design System
    =================================== */
 
-/* DEBUG STYLES - Colored shadows to identify elements */
-/* Box 1 - RED: File info stats (corrections/issues badges) */
-.debug-stats {
-    box-shadow: 0 0 0 3px red !important;
-    outline: 2px dashed red !important;
-    position: relative;
-}
-.debug-stats::after {
-    content: "1-STATS";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: red;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 2 - BLUE: Spell check actions (Apply All, Apply Selected, Undo buttons) */
-.debug-actions {
-    box-shadow: 0 0 0 3px blue !important;
-    outline: 2px dashed blue !important;
-    position: relative;
-}
-.debug-actions::after {
-    content: "2-ACTIONS";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: blue;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 3 - GREEN: Correction content (original, suggested text) */
-.debug-content {
-    box-shadow: 0 0 0 3px green !important;
-    outline: 2px dashed green !important;
-    position: relative;
-}
-.debug-content::after {
-    content: "3-CONTENT";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: green;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 4 - ORANGE: Correction checkbox */
-.debug-checkbox {
-    box-shadow: 0 0 0 3px orange !important;
-    outline: 2px dashed orange !important;
-    position: relative;
-}
-.debug-checkbox::after {
-    content: "4-CHECKBOX";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: orange;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 5 - PURPLE: Correction action (Apply button) */
-.debug-apply {
-    box-shadow: 0 0 0 3px purple !important;
-    outline: 2px dashed purple !important;
-    position: relative;
-}
-.debug-apply::after {
-    content: "5-APPLY-BTN";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: purple;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 6 - WHITE: Correction context */
-.debug-context {
-    box-shadow: 0 0 0 3px white !important;
-    outline: 2px dashed #666 !important;
-    position: relative;
-    background-color: rgba(255, 255, 255, 0.3);
-}
-.debug-context::after {
-    content: "6-CONTEXT";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: #666;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 7 - MAGENTA: Formatting issue item */
-.debug-format {
-    box-shadow: 0 0 0 3px magenta !important;
-    outline: 2px dashed magenta !important;
-    position: relative;
-}
-.debug-format::after {
-    content: "7-FORMAT-ISSUE";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: magenta;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* Box 8 - YELLOW: Main content wrapper (checkbox + content + apply button) */
-.debug-main-content {
-    box-shadow: 0 0 0 3px yellow !important;
-    outline: 2px dashed #b8860b !important;
-    position: relative;
-    background-color: rgba(255, 255, 0, 0.1);
-}
-.debug-main-content::after {
-    content: "8-MAIN-CONTENT";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background: #b8860b;
-    color: white;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-}
-
-/* END DEBUG STYLES */
-
 /* CSS Custom Properties - Professional Color Palette */
 :root {
     /* Slate color palette */
@@ -721,6 +556,8 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 /* In RTL mode, English text should remain LTR for readability */
@@ -733,9 +570,9 @@
 
 /* Context in RTL should allow mixed text */
 [dir="rtl"] .context-text {
-    text-align: right !important;
+    text-align: start !important;
     /* Don't force RTL direction - let text flow naturally based on content */
-    unicode-bidi: isolate;
+    unicode-bidi: plaintext;
     max-width: 100%;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1233,7 +1070,8 @@
 
 /* Explicit LTR rules for context text */
 [dir="ltr"] .context-text {
-    text-align: left !important;
+    text-align: start !important;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .correction-action {
@@ -1952,6 +1790,8 @@
     color: var(--color-warning-600);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .formatting-issue-line {
@@ -1964,6 +1804,8 @@
 
 .formatting-issue-description {
     margin-bottom: var(--spacing-xs);
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .formatting-issue-label {
@@ -1977,6 +1819,8 @@
     font-size: var(--font-size-sm);
     color: var(--color-slate-700);
     line-height: 1.4;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .formatting-issue-suggestion {
@@ -1984,12 +1828,16 @@
     background-color: var(--color-success-50);
     border-radius: var(--radius-sm);
     margin-top: var(--spacing-xs);
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .formatting-issue-suggestion-text {
     font-size: var(--font-size-sm);
     color: var(--color-success-600);
     font-weight: var(--font-weight-medium);
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .formatting-issue-action {
@@ -2304,7 +2152,8 @@
 }
 
 [dir="rtl"] .formatting-issue-type {
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .formatting-issue-line {
@@ -2312,7 +2161,8 @@
 }
 
 [dir="rtl"] .formatting-issue-description {
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .formatting-issue-label {
@@ -2320,15 +2170,18 @@
 }
 
 [dir="rtl"] .formatting-issue-text {
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .formatting-issue-suggestion {
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .formatting-issue-suggestion-text {
-    text-align: right;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .formatting-issue-action {
