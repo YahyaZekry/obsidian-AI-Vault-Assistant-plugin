@@ -75,13 +75,6 @@ export class SidebarView extends ItemView {
 
         // Check if RTL is enabled (Arabic language or RTL support setting)
         const isRTL = this.plugin.settings.spellCheckLanguage === 'ar' || this.plugin.settings.rtlSupport;
-        
-        // Debug logging for RTL
-        console.log('[Perplexity] RTL check:', {
-            language: this.plugin.settings.spellCheckLanguage,
-            rtlSupport: this.plugin.settings.rtlSupport,
-            isRTL: isRTL
-        });
 
         // Apply RTL to the main container element for proper inheritance
         // NOTE: We keep the main container as LTR for scrollbar positioning
@@ -90,8 +83,6 @@ export class SidebarView extends ItemView {
             // Keep main container as LTR for scrollbar on right side
             container.setAttr('dir', 'ltr');
             container.style.direction = 'ltr';
-            // Don't set text-align on main container - let inner container handle it
-            console.log('[Perplexity] RTL mode - main container kept as LTR for scrollbar');
         } else {
             // Explicitly set LTR for English/other languages
             container.setAttr('dir', 'ltr');
@@ -261,11 +252,17 @@ export class SidebarView extends ItemView {
             cls: 'correction-item' + (isSelected ? ' selected' : '') 
         });
 
-        // Main content wrapper (50% width) - contains checkbox, content, and apply button
+        // Check if RTL mode is enabled
+        const isRTL = this.plugin.settings.spellCheckLanguage === 'ar' || this.plugin.settings.rtlSupport;
+
+        // Main content wrapper (100% width) - contains left panel and content
         const mainContent = item.createDiv({ cls: 'correction-main-content' });
 
+        // Left panel: checkbox above apply button
+        const leftPanel = mainContent.createDiv({ cls: 'correction-left-panel' });
+
         // Checkbox
-        const checkboxWrapper = mainContent.createDiv({ cls: 'correction-checkbox' });
+        const checkboxWrapper = leftPanel.createDiv({ cls: 'correction-checkbox' });
         const checkbox = checkboxWrapper.createEl('input', { 
             type: 'checkbox',
             cls: 'correction-checkbox-input'
@@ -281,7 +278,15 @@ export class SidebarView extends ItemView {
             item.classList.toggle('selected', checked);
         });
 
-        // Content
+        // Apply button (in left panel, below checkbox)
+        const action = leftPanel.createDiv({ cls: 'correction-action' });
+        const applyBtn = action.createEl('button', { 
+            cls: 'btn btn-small btn-apply',
+            text: 'Apply' 
+        });
+        applyBtn.addEventListener('click', () => this.applyCorrection(index));
+
+        // Content (right side)
         const content = mainContent.createDiv({ cls: 'correction-content' });
 
         // Original text
@@ -291,6 +296,15 @@ export class SidebarView extends ItemView {
             cls: 'correction-text original-text',
             text: correction.original 
         });
+        
+        // Apply RTL inline styles if needed
+        if (isRTL) {
+            // Use setProperty with !important to override CSS
+            originalText.style.setProperty('display', 'block', 'important');
+            originalText.style.setProperty('text-align', 'right', 'important');
+            originalText.style.setProperty('direction', 'rtl', 'important');
+            originalText.style.setProperty('unicode-bidi', 'isolate', 'important');
+        }
 
         // Suggested text
         const suggestedSection = content.createDiv({ cls: 'correction-section suggested' });
@@ -299,6 +313,15 @@ export class SidebarView extends ItemView {
             cls: 'correction-text suggested-text',
             text: correction.suggested 
         });
+        
+        // Apply RTL inline styles if needed
+        if (isRTL) {
+            // Use setProperty with !important to override CSS
+            suggestedText.style.setProperty('display', 'block', 'important');
+            suggestedText.style.setProperty('text-align', 'right', 'important');
+            suggestedText.style.setProperty('direction', 'rtl', 'important');
+            suggestedText.style.setProperty('unicode-bidi', 'isolate', 'important');
+        }
 
         // Confidence indicator
         const confidence = content.createDiv({ cls: 'correction-confidence' });
@@ -308,13 +331,6 @@ export class SidebarView extends ItemView {
         // Determine confidence color based on score
         // API returns confidence as decimal (0-1), convert to percentage (0-100)
         let confidenceScore = correction.confidence || 0;
-        
-        // Debug logging for confidence values
-        console.log('[Perplexity] Confidence value:', {
-            original: correction.confidence,
-            processed: confidenceScore,
-            type: typeof correction.confidence
-        });
         
         // If confidence is a decimal (0-1), convert to percentage
         if (confidenceScore > 0 && confidenceScore <= 1) {
@@ -349,15 +365,7 @@ export class SidebarView extends ItemView {
             text: `${Math.round(confidenceScore)}%`
         });
 
-        // Apply button
-        const action = mainContent.createDiv({ cls: 'correction-action' });
-        const applyBtn = action.createEl('button', { 
-            cls: 'btn btn-small btn-apply',
-            text: 'Apply' 
-        });
-        applyBtn.addEventListener('click', () => this.applyCorrection(index));
-
-        // Context if available (50% width)
+        // Context if available (100% width at bottom)
         if (correction.context) {
             const context = item.createDiv({ cls: 'correction-context' });
             context.createDiv({ cls: 'context-label', text: 'Context' });

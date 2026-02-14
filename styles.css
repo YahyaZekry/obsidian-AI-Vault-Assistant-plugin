@@ -348,6 +348,7 @@
 
 .correction-item {
     display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm);
@@ -355,7 +356,6 @@
     border-radius: var(--radius-md);
     background-color: var(--color-slate-50);
     transition: all var(--transition-fast);
-    flex-wrap: nowrap;
     min-width: 0;
     width: 100%;
     max-width: 100%;
@@ -364,21 +364,20 @@
     align-items: flex-start;
 }
 
-/* Main content wrapper: checkbox + content + apply button = 50% */
+/* Main content wrapper: left panel (checkbox + apply button) + content = 100% */
 .correction-main-content {
     display: flex;
-    flex: 0 0 50%;
-    max-width: 50%;
-    min-width: 50%;
+    flex: 0 0 auto;
+    width: 100%;
     gap: var(--spacing-sm);
     align-items: flex-start;
 }
 
-/* Context takes 50% width */
+/* Context takes 100% width, appears at the bottom */
 .correction-item > .correction-context {
-    flex: 0 0 50%;
-    max-width: 50%;
-    min-width: 50%;
+    flex: 0 0 auto;
+    width: 100%;
+    margin-top: var(--spacing-xs);
 }
 
 .correction-item > * {
@@ -396,12 +395,24 @@
     background-color: var(--color-blue-50);
 }
 
+/* Left panel: checkbox above apply button */
+.correction-left-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+    min-width: 60px;
+    width: 60px;
+    padding-top: var(--spacing-xs);
+}
+
 .correction-checkbox {
     display: flex;
-    align-items: flex-start;
-    padding-top: var(--spacing-xs);
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    min-width: 20px;
 }
 
 .correction-checkbox-input {
@@ -409,6 +420,20 @@
     height: 16px;
     cursor: pointer;
     accent-color: var(--color-blue-600);
+}
+
+/* Apply button in left panel - centered */
+.correction-left-panel .correction-action {
+    width: auto;
+    display: flex;
+    justify-content: center;
+    padding-top: 0;
+}
+
+.correction-left-panel .btn-apply {
+    width: auto;
+    min-width: 50px;
+    max-width: 60px;
 }
 
 .correction-content {
@@ -464,14 +489,15 @@
 .original-text {
     background-color: var(--color-error-50);
     color: var(--color-error-600);
-    text-decoration: line-through;
+    /* strikethrough removed per user request */
     opacity: 0.8;
     word-wrap: break-word;
     overflow-wrap: break-word;
     overflow: hidden;
     max-width: 100%;
     white-space: normal;
-    text-align: left;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .suggested-text {
@@ -483,7 +509,8 @@
     overflow: hidden;
     max-width: 100%;
     white-space: normal;
-    text-align: left;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 /* ===================================
@@ -495,6 +522,9 @@
     flex-direction: column;
     gap: 2px;
     padding: var(--spacing-xs) 0;
+    /* Always LTR for English text */
+    direction: ltr;
+    text-align: left;
 }
 
 .confidence-label {
@@ -509,6 +539,8 @@
     background-color: var(--color-slate-200);
     border-radius: 3px;
     overflow: hidden;
+    /* Always LTR */
+    direction: ltr;
 }
 
 .confidence-bar-fill {
@@ -560,18 +592,9 @@
     unicode-bidi: plaintext;
 }
 
-/* In RTL mode, English text should remain LTR for readability */
-[dir="rtl"] .original-text,
-[dir="rtl"] .suggested-text {
-    text-align: right !important;
-    /* Don't force RTL direction - let text flow naturally based on content */
-    unicode-bidi: isolate;
-}
-
 /* Context in RTL should allow mixed text */
 [dir="rtl"] .context-text {
     text-align: start !important;
-    /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: plaintext;
     max-width: 100%;
     word-wrap: break-word;
@@ -915,16 +938,14 @@
 }
 
 [dir="rtl"] .correction-item {
-    flex-direction: row-reverse;
+    flex-direction: column;
     text-align: right;
-    flex-wrap: nowrap;
 }
 
 /* Explicit LTR rules for correction items */
 [dir="ltr"] .correction-item {
-    flex-direction: row;
+    flex-direction: column;
     text-align: left;
-    flex-wrap: nowrap;
 }
 
 /* RTL rules for main content wrapper */
@@ -934,6 +955,15 @@
 
 [dir="ltr"] .correction-main-content {
     flex-direction: row;
+}
+
+/* RTL rules for left panel */
+[dir="rtl"] .correction-left-panel {
+    /* Panel stays the same, just positioned on right via row-reverse */
+}
+
+[dir="ltr"] .correction-left-panel {
+    /* Panel stays the same, positioned on left */
 }
 
 [dir="rtl"] .correction-checkbox {
@@ -954,8 +984,8 @@
 }
 
 [dir="rtl"] .correction-section {
-    text-align: right !important;
-    unicode-bidi: isolate;
+    text-align: start !important;
+    unicode-bidi: plaintext;
 }
 
 [dir="ltr"] .correction-section {
@@ -965,13 +995,11 @@
 [dir="rtl"] .correction-section.original {
     margin-right: 0;
     margin-left: var(--spacing-xs);
-    text-align: right;
 }
 
 [dir="rtl"] .correction-section.suggested {
     margin-left: 0;
     margin-right: var(--spacing-xs);
-    text-align: right;
 }
 
 [dir="rtl"] .correction-label {
@@ -984,8 +1012,8 @@
 }
 
 [dir="rtl"] .correction-text {
-    text-align: right !important;
-    unicode-bidi: isolate;
+    text-align: start !important;
+    unicode-bidi: plaintext;
 }
 
 [dir="ltr"] .correction-text {
@@ -1010,8 +1038,11 @@
     text-align: left !important;
 }
 
+/* Confidence is always LTR for English */
 [dir="rtl"] .correction-confidence {
-    text-align: right;
+    /* Keep LTR for English text */
+    direction: ltr;
+    text-align: left;
 }
 
 /* Explicit LTR rules for confidence */
@@ -1020,7 +1051,8 @@
 }
 
 [dir="rtl"] .confidence-label {
-    text-align: right;
+    /* Keep LTR for English text */
+    text-align: left;
 }
 
 /* Explicit LTR rules for confidence label */
@@ -1029,12 +1061,13 @@
 }
 
 [dir="rtl"] .confidence-bar-container {
-    margin-left: auto;
-    margin-right: 0;
+    /* Keep LTR for bar direction */
+    direction: ltr;
 }
 
 [dir="rtl"] .confidence-value {
-    text-align: right;
+    /* Keep LTR for English text */
+    text-align: left;
 }
 
 /* Explicit LTR rules for confidence value */
@@ -1213,7 +1246,6 @@
     }
     
     .correction-item {
-        flex-direction: column;
         gap: var(--spacing-xs);
     }
     
@@ -1223,11 +1255,6 @@
     
     .correction-action {
         align-self: flex-end;
-        width: 100%;
-    }
-    
-    .correction-action .btn {
-        width: 100%;
     }
     
     .spell-check-actions {
@@ -1276,15 +1303,6 @@
         grid-template-columns: 1fr;
     }
     
-    .correction-item {
-        flex-wrap: wrap;
-    }
-    
-    .correction-action {
-        width: 100%;
-        margin-top: var(--spacing-xs);
-    }
-    
     .spell-check-actions {
         flex-wrap: wrap;
     }
@@ -1310,10 +1328,6 @@
 @media (min-width: 501px) {
     .quick-actions-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .correction-item {
-        flex-wrap: nowrap;
     }
 }
 
@@ -1359,10 +1373,6 @@
 @media (max-width: 600px) {
     .quick-actions-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-
-    .correction-item {
-        flex-direction: column;
     }
 
     .correction-checkbox {
