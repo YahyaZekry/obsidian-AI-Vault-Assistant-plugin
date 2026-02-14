@@ -84,16 +84,19 @@ export class SidebarView extends ItemView {
         });
 
         // Apply RTL to the main container element for proper inheritance
+        // NOTE: We keep the main container as LTR for scrollbar positioning
+        // RTL direction is applied only to the inner sidebar-container
         if (isRTL) {
-            container.setAttr('dir', 'rtl');
-            // Also apply inline style as fallback
-            container.style.direction = 'rtl';
-            container.style.textAlign = 'right';
-            console.log('[Perplexity] RTL applied to main container');
+            // Keep main container as LTR for scrollbar on right side
+            container.setAttr('dir', 'ltr');
+            container.style.direction = 'ltr';
+            // Don't set text-align on main container - let inner container handle it
+            console.log('[Perplexity] RTL mode - main container kept as LTR for scrollbar');
         } else {
-            container.removeAttribute('dir');
-            container.style.direction = '';
-            container.style.textAlign = '';
+            // Explicitly set LTR for English/other languages
+            container.setAttr('dir', 'ltr');
+            container.style.direction = 'ltr';
+            container.style.textAlign = 'left';
         }
 
         // Apply inline styles as fallback for max-width (Obsidian may override CSS)
@@ -112,6 +115,11 @@ export class SidebarView extends ItemView {
             mainContainer.setAttr('dir', 'rtl');
             mainContainer.style.direction = 'rtl';
             mainContainer.style.textAlign = 'right';
+        } else {
+            // Explicitly set LTR for English/other languages
+            mainContainer.setAttr('dir', 'ltr');
+            mainContainer.style.direction = 'ltr';
+            mainContainer.style.textAlign = 'left';
         }
 
         // Header section
@@ -150,7 +158,7 @@ export class SidebarView extends ItemView {
         fileName.createSpan({ cls: 'file-icon', text: '📄' });
         fileName.createSpan({ cls: 'file-name', text: this.currentFile!.basename });
 
-        const stats = fileInfo.createDiv({ cls: 'file-info-stats' });
+        const stats = fileInfo.createDiv({ cls: 'file-info-stats debug-stats' });
 
         if (this.spellCheckResults) {
             const totalCorrections = this.spellCheckResults.corrections.length;
@@ -188,7 +196,7 @@ export class SidebarView extends ItemView {
 
         // Action buttons (only show if there are corrections)
         if (pendingCorrections.length > 0) {
-            const actions = section.createDiv({ cls: 'spell-check-actions' });
+            const actions = section.createDiv({ cls: 'spell-check-actions debug-actions' });
 
             const applyAllBtn = actions.createEl('button', { 
                 cls: 'btn btn-primary btn-small',
@@ -253,8 +261,11 @@ export class SidebarView extends ItemView {
             cls: 'correction-item' + (isSelected ? ' selected' : '') 
         });
 
+        // Main content wrapper (50% width) - contains checkbox, content, and apply button
+        const mainContent = item.createDiv({ cls: 'correction-main-content debug-main-content' });
+
         // Checkbox
-        const checkboxWrapper = item.createDiv({ cls: 'correction-checkbox' });
+        const checkboxWrapper = mainContent.createDiv({ cls: 'correction-checkbox debug-checkbox' });
         const checkbox = checkboxWrapper.createEl('input', { 
             type: 'checkbox',
             cls: 'correction-checkbox-input'
@@ -271,7 +282,7 @@ export class SidebarView extends ItemView {
         });
 
         // Content
-        const content = item.createDiv({ cls: 'correction-content' });
+        const content = mainContent.createDiv({ cls: 'correction-content debug-content' });
 
         // Original text
         const originalSection = content.createDiv({ cls: 'correction-section original' });
@@ -339,16 +350,16 @@ export class SidebarView extends ItemView {
         });
 
         // Apply button
-        const action = item.createDiv({ cls: 'correction-action' });
+        const action = mainContent.createDiv({ cls: 'correction-action debug-apply' });
         const applyBtn = action.createEl('button', { 
             cls: 'btn btn-small btn-apply',
             text: 'Apply' 
         });
         applyBtn.addEventListener('click', () => this.applyCorrection(index));
 
-        // Context if available
+        // Context if available (50% width)
         if (correction.context) {
-            const context = item.createDiv({ cls: 'correction-context' });
+            const context = item.createDiv({ cls: 'correction-context debug-context' });
             context.createDiv({ cls: 'context-label', text: 'Context' });
             context.createDiv({ cls: 'context-text', text: correction.context });
         }
@@ -368,7 +379,7 @@ export class SidebarView extends ItemView {
     }
 
     private renderFormattingIssueItem(container: HTMLElement, issue: any, index: number): void {
-        const item = container.createDiv({ cls: 'formatting-issue-item' });
+        const item = container.createDiv({ cls: 'formatting-issue-item debug-format' });
 
         // Issue header with line number
         const issueHeader = item.createDiv({ cls: 'formatting-issue-header' });
