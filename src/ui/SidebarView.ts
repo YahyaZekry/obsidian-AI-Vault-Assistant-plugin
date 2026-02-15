@@ -76,19 +76,9 @@ export class SidebarView extends ItemView {
         // Check if RTL is enabled (Arabic language or RTL support setting)
         const isRTL = this.plugin.settings.spellCheckLanguage === 'ar' || this.plugin.settings.rtlSupport;
 
-        // Apply RTL to the main container element for proper inheritance
-        // NOTE: We keep the main container as LTR for scrollbar positioning
-        // RTL direction is applied only to the inner sidebar-container
-        if (isRTL) {
-            // Keep main container as LTR for scrollbar on right side
-            container.setAttr('dir', 'ltr');
-            container.style.direction = 'ltr';
-        } else {
-            // Explicitly set LTR for English/other languages
-            container.setAttr('dir', 'ltr');
-            container.style.direction = 'ltr';
-            container.style.textAlign = 'left';
-        }
+        // Keep main container as LTR for scrollbar on right side
+        // RTL direction is applied only to the inner sidebar-container via CSS
+        container.setAttr('dir', 'ltr');
 
         // Apply inline styles as fallback for max-width (Obsidian may override CSS)
         container.style.maxWidth = '500px';
@@ -96,22 +86,11 @@ export class SidebarView extends ItemView {
         container.style.margin = '0 auto';
         container.style.boxSizing = 'border-box';
 
-        // Main container
+        // Main container - set direction attribute, CSS handles the rest
         const mainContainer = container.createDiv({ 
             cls: 'sidebar-container'
         });
-        
-        // Also apply RTL to inner container for proper inheritance
-        if (isRTL) {
-            mainContainer.setAttr('dir', 'rtl');
-            mainContainer.style.direction = 'rtl';
-            mainContainer.style.textAlign = 'right';
-        } else {
-            // Explicitly set LTR for English/other languages
-            mainContainer.setAttr('dir', 'ltr');
-            mainContainer.style.direction = 'ltr';
-            mainContainer.style.textAlign = 'left';
-        }
+        mainContainer.setAttr('dir', isRTL ? 'rtl' : 'ltr');
 
         // Header section
         const header = mainContainer.createDiv({ cls: 'sidebar-header' });
@@ -292,36 +271,18 @@ export class SidebarView extends ItemView {
         // Original text
         const originalSection = content.createDiv({ cls: 'correction-section original' });
         const originalLabel = originalSection.createDiv({ cls: 'correction-label', text: 'Original' });
-        const originalText = originalSection.createDiv({ 
+        originalSection.createDiv({ 
             cls: 'correction-text original-text',
             text: correction.original 
         });
-        
-        // Apply RTL inline styles if needed
-        if (isRTL) {
-            // Use setProperty with !important to override CSS
-            originalText.style.setProperty('display', 'block', 'important');
-            originalText.style.setProperty('text-align', 'right', 'important');
-            originalText.style.setProperty('direction', 'rtl', 'important');
-            originalText.style.setProperty('unicode-bidi', 'isolate', 'important');
-        }
 
         // Suggested text
         const suggestedSection = content.createDiv({ cls: 'correction-section suggested' });
         const suggestedLabel = suggestedSection.createDiv({ cls: 'correction-label', text: 'Suggested' });
-        const suggestedText = suggestedSection.createDiv({ 
+        suggestedSection.createDiv({ 
             cls: 'correction-text suggested-text',
             text: correction.suggested 
         });
-        
-        // Apply RTL inline styles if needed
-        if (isRTL) {
-            // Use setProperty with !important to override CSS
-            suggestedText.style.setProperty('display', 'block', 'important');
-            suggestedText.style.setProperty('text-align', 'right', 'important');
-            suggestedText.style.setProperty('direction', 'rtl', 'important');
-            suggestedText.style.setProperty('unicode-bidi', 'isolate', 'important');
-        }
 
         // Confidence indicator
         const confidence = content.createDiv({ cls: 'correction-confidence' });
@@ -430,12 +391,14 @@ export class SidebarView extends ItemView {
             const content = await this.app.vault.read(this.currentFile);
             const lines = content.split('\n');
 
-            if (issue.line > 0 && issue.line <= lines.length && issue.suggestion) {
+            if (issue.line > 0 && issue.line <= lines.length && issue.originalText && issue.suggestedText) {
                 // Save for undo
                 this.undoHistory.push({ file: this.currentFile, content });
 
-                // Apply the fix
-                lines[issue.line - 1] = issue.suggestion;
+                // Apply the fix - replace only the problematic text with the suggested text
+                const lineContent = lines[issue.line - 1];
+                const newLineContent = lineContent.replace(issue.originalText, issue.suggestedText);
+                lines[issue.line - 1] = newLineContent;
 
                 const newContent = lines.join('\n');
                 await this.app.vault.modify(this.currentFile, newContent);
@@ -533,6 +496,7 @@ export class SidebarView extends ItemView {
         }
 
         const correction = this.spellCheckResults.corrections[index];
+        
         if (!correction || this.appliedCorrections.has(index)) {
             return;
         }
@@ -541,29 +505,20 @@ export class SidebarView extends ItemView {
 
         try {
             const content = await this.app.vault.read(this.currentFile);
-            const lines = content.split('\n');
 
-            if (correction.line > 0 && correction.line <= lines.length) {
-                // Save for undo
-                this.undoHistory.push({ file: this.currentFile, content });
+            // Save for undo
+            this.undoHistory.push({ file: this.currentFile, content });
 
-                // Replace the original with suggestion
-                const lineContent = lines[correction.line - 1];
-                const newLineContent = lineContent.replace(
-                    correction.original,
-                    correction.suggested
-                );
-                lines[correction.line - 1] = newLineContent;
+            // Replace all occurrences using global regex (like the old working code)
+            const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            const newContent = content.replace(regex, correction.suggested);
+            await this.app.vault.modify(this.currentFile, newContent);
 
-                const newContent = lines.join('\n');
-                await this.app.vault.modify(this.currentFile, newContent);
+            this.appliedCorrections.add(index);
+            this.selectedCorrections.delete(index);
+            this.refresh();
 
-                this.appliedCorrections.add(index);
-                this.selectedCorrections.delete(index);
-                this.refresh();
-
-                new Notice('Correction applied successfully');
-            }
+            new Notice('Correction applied successfully');
         } catch (error) {
             new Notice('Failed to apply correction: ' + (error as Error).message);
         } finally {
@@ -580,13 +535,12 @@ export class SidebarView extends ItemView {
         this.showProcessingState();
 
         try {
-            const content = await this.app.vault.read(this.currentFile);
-            const lines = content.split('\n');
-            let modified = false;
+            let content = await this.app.vault.read(this.currentFile);
 
             // Save for undo
             this.undoHistory.push({ file: this.currentFile, content });
 
+            // Apply all corrections using global regex (like the old working code)
             for (let i = 0; i < this.spellCheckResults.corrections.length; i++) {
                 const correction = this.spellCheckResults.corrections[i];
                 
@@ -594,24 +548,14 @@ export class SidebarView extends ItemView {
                     continue;
                 }
 
-                if (correction.line > 0 && correction.line <= lines.length) {
-                    const lineContent = lines[correction.line - 1];
-                    const newLineContent = lineContent.replace(
-                        correction.original,
-                        correction.suggested
-                    );
-                    lines[correction.line - 1] = newLineContent;
-                    this.appliedCorrections.add(i);
-                    modified = true;
-                }
+                const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                content = content.replace(regex, correction.suggested);
+                this.appliedCorrections.add(i);
             }
 
-            if (modified) {
-                const newContent = lines.join('\n');
-                await this.app.vault.modify(this.currentFile, newContent);
-                this.refresh();
-                new Notice('All corrections applied successfully');
-            }
+            await this.app.vault.modify(this.currentFile, content);
+            this.refresh();
+            new Notice('All corrections applied successfully');
         } catch (error) {
             new Notice('Failed to apply corrections: ' + (error as Error).message);
         } finally {
@@ -634,13 +578,12 @@ export class SidebarView extends ItemView {
         this.showProcessingState();
 
         try {
-            const content = await this.app.vault.read(this.currentFile);
-            const lines = content.split('\n');
-            let modified = false;
+            let content = await this.app.vault.read(this.currentFile);
 
             // Save for undo
             this.undoHistory.push({ file: this.currentFile, content });
 
+            // Apply selected corrections using global regex (like the old working code)
             for (const index of this.selectedCorrections) {
                 const correction = this.spellCheckResults.corrections[index];
                 
@@ -648,25 +591,15 @@ export class SidebarView extends ItemView {
                     continue;
                 }
 
-                if (correction.line > 0 && correction.line <= lines.length) {
-                    const lineContent = lines[correction.line - 1];
-                    const newLineContent = lineContent.replace(
-                        correction.original,
-                        correction.suggested
-                    );
-                    lines[correction.line - 1] = newLineContent;
-                    this.appliedCorrections.add(index);
-                    modified = true;
-                }
+                const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                content = content.replace(regex, correction.suggested);
+                this.appliedCorrections.add(index);
             }
 
-            if (modified) {
-                const newContent = lines.join('\n');
-                await this.app.vault.modify(this.currentFile, newContent);
-                this.selectedCorrections.clear();
-                this.refresh();
-                new Notice('Selected corrections applied successfully');
-            }
+            await this.app.vault.modify(this.currentFile, content);
+            this.selectedCorrections.clear();
+            this.refresh();
+            new Notice('Selected corrections applied successfully');
         } catch (error) {
             new Notice('Failed to apply corrections: ' + (error as Error).message);
         } finally {

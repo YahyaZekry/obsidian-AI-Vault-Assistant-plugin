@@ -442,7 +442,7 @@
     flex-direction: column;
     gap: var(--spacing-sm);
     min-width: 0;
-    text-align: left;
+    text-align: start;
 }
 
 .correction-section {
@@ -453,7 +453,7 @@
     word-wrap: break-word;
     overflow: hidden;
     max-width: 100%;
-    text-align: left;
+    text-align: start;
 }
 
 .correction-section.original {
@@ -483,19 +483,14 @@
     overflow: hidden;
     max-width: 100%;
     white-space: normal;
-    text-align: left;
+    text-align: start;
+    unicode-bidi: plaintext;
 }
 
 .original-text {
     background-color: var(--color-error-50);
     color: var(--color-error-600);
-    /* strikethrough removed per user request */
     opacity: 0.8;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    overflow: hidden;
-    max-width: 100%;
-    white-space: normal;
     text-align: start;
     unicode-bidi: plaintext;
 }
@@ -504,11 +499,6 @@
     background-color: var(--color-success-50);
     color: var(--color-success-600);
     font-weight: var(--font-weight-medium);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    overflow: hidden;
-    max-width: 100%;
-    white-space: normal;
     text-align: start;
     unicode-bidi: plaintext;
 }
@@ -596,10 +586,6 @@
 [dir="rtl"] .context-text {
     text-align: start !important;
     unicode-bidi: plaintext;
-    max-width: 100%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
 }
 
 /* ===================================
@@ -855,11 +841,6 @@
     text-align: right !important;
 }
 
-[dir="ltr"] .sidebar-container {
-    direction: ltr !important;
-    text-align: left !important;
-}
-
 [dir="rtl"] .sidebar-header {
     text-align: right;
     border-bottom: 1px solid var(--color-slate-200);
@@ -895,16 +876,6 @@
     text-align: right;
 }
 
-/* Explicit LTR rules for file info stats - badges centered */
-[dir="ltr"] .file-info-stats {
-    flex-direction: row;
-    justify-content: center;
-}
-
-[dir="ltr"] .stat-badge {
-    text-align: center;
-}
-
 /* RTL rules for file info stats - badges centered */
 [dir="rtl"] .file-info-stats {
     flex-direction: row-reverse;
@@ -926,13 +897,6 @@
     direction: rtl;
 }
 
-/* Explicit LTR rules for action buttons */
-[dir="ltr"] .spell-check-actions {
-    flex-direction: row;
-    justify-content: center;
-    direction: ltr;
-}
-
 [dir="rtl"] .corrections-list {
     text-align: right;
 }
@@ -942,54 +906,24 @@
     text-align: right;
 }
 
-/* Explicit LTR rules for correction items */
-[dir="ltr"] .correction-item {
-    flex-direction: column;
-    text-align: left;
-}
-
 /* RTL rules for main content wrapper */
 [dir="rtl"] .correction-main-content {
     flex-direction: row-reverse;
 }
 
-[dir="ltr"] .correction-main-content {
-    flex-direction: row;
-}
-
-/* RTL rules for left panel */
+/* Explicitly position left panel on right side for RTL */
 [dir="rtl"] .correction-left-panel {
-    /* Panel stays the same, just positioned on right via row-reverse */
-}
-
-[dir="ltr"] .correction-left-panel {
-    /* Panel stays the same, positioned on left */
-}
-
-[dir="rtl"] .correction-checkbox {
-    /* RTL handled by parent flex-direction */
-}
-
-/* Explicit LTR rules for checkbox */
-[dir="ltr"] .correction-checkbox {
-    /* LTR handled by parent flex-direction */
+    order: 2; /* Move to end of flex container (right side) */
 }
 
 [dir="rtl"] .correction-content {
+    order: 1; /* Move to start of flex container (left side) */
     text-align: right;
-}
-
-[dir="ltr"] .correction-content {
-    text-align: left;
 }
 
 [dir="rtl"] .correction-section {
     text-align: start !important;
     unicode-bidi: plaintext;
-}
-
-[dir="ltr"] .correction-section {
-    text-align: left !important;
 }
 
 [dir="rtl"] .correction-section.original {
@@ -1006,114 +940,50 @@
     text-align: right;
 }
 
-/* Explicit LTR rules for labels */
-[dir="ltr"] .correction-label {
-    text-align: left;
-}
-
 [dir="rtl"] .correction-text {
     text-align: start !important;
     unicode-bidi: plaintext;
 }
 
-[dir="ltr"] .correction-text {
-    text-align: left !important;
-}
-
-[dir="rtl"] .original-text {
-    text-align: right !important;
-    unicode-bidi: isolate;
-}
-
-[dir="ltr"] .original-text {
-    text-align: left !important;
-}
-
+[dir="rtl"] .original-text,
 [dir="rtl"] .suggested-text {
-    text-align: right !important;
-    unicode-bidi: isolate;
-}
-
-[dir="ltr"] .suggested-text {
-    text-align: left !important;
+    text-align: right;
 }
 
 /* Confidence is always LTR for English */
 [dir="rtl"] .correction-confidence {
-    /* Keep LTR for English text */
     direction: ltr;
-    text-align: left;
-}
-
-/* Explicit LTR rules for confidence */
-[dir="ltr"] .correction-confidence {
     text-align: left;
 }
 
 [dir="rtl"] .confidence-label {
-    /* Keep LTR for English text */
-    text-align: left;
-}
-
-/* Explicit LTR rules for confidence label */
-[dir="ltr"] .confidence-label {
     text-align: left;
 }
 
 [dir="rtl"] .confidence-bar-container {
-    /* Keep LTR for bar direction */
     direction: ltr;
 }
 
 [dir="rtl"] .confidence-value {
-    /* Keep LTR for English text */
-    text-align: left;
-}
-
-/* Explicit LTR rules for confidence value */
-[dir="ltr"] .confidence-value {
     text-align: left;
 }
 
 [dir="rtl"] .correction-context {
     text-align: right !important;
-    /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
-}
-
-/* Explicit LTR rules for correction context */
-[dir="ltr"] .correction-context {
-    text-align: left !important;
 }
 
 [dir="rtl"] .context-label {
     text-align: right;
 }
 
-/* Explicit LTR rules for context label */
-[dir="ltr"] .context-label {
-    text-align: left;
-}
-
 [dir="rtl"] .context-text {
-    text-align: right !important;
-    /* Don't force RTL direction - let text flow naturally based on content */
-    unicode-bidi: isolate;
-}
-
-/* Explicit LTR rules for context text */
-[dir="ltr"] .context-text {
     text-align: start !important;
     unicode-bidi: plaintext;
 }
 
 [dir="rtl"] .correction-action {
     text-align: right;
-}
-
-/* Explicit LTR rules for correction action */
-[dir="ltr"] .correction-action {
-    text-align: left;
 }
 
 [dir="rtl"] .btn {
@@ -2279,12 +2149,4 @@
 
 .theme-dark .modal::-webkit-scrollbar-thumb:hover {
     background: var(--color-slate-600);
-}
-
-.theme-dark .modal::-webkit-scrollbar-thumb {
-  background: var(--color-slate-500);
-}
-
-.theme-dark .modal::-webkit-scrollbar-thumb:hover {
-  background: var(--color-slate-600);
 }

@@ -113,3 +113,7 @@ main.js
 Thumbs.db
 .DS_Store
 ENHANCEMENT_PLAN.md
+plans/css-analysis-report.md
+plans/css-migration-plan.md
+plans/rtl-text-alignment-fix.md
+
