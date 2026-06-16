@@ -1,10 +1,10 @@
 import { TFile } from 'obsidian';
-import { PerplexityPluginSettings } from '../types';
+import { AIVaultAssistantSettings } from '../types';
 
 export class FileFilter {
-    private settings: PerplexityPluginSettings;
+    private settings: AIVaultAssistantSettings;
 
-    constructor(settings: PerplexityPluginSettings) {
+    constructor(settings: AIVaultAssistantSettings) {
         this.settings = settings;
     }
 

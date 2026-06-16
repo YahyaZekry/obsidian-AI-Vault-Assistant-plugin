@@ -1,5 +1,5 @@
 import { Modal, App, Setting, Notice, MarkdownView } from 'obsidian';
-import PerplexityPlugin from '../../PerplexityPlugin';
+import { AIVaultAssistantPlugin } from '../../AIVaultAssistantPlugin';
 import { SpellCheckStrategyFactory } from '../../services/SpellCheckStrategy';
 import { SpellCheckResultsModal } from './SpellCheckResultsModal';
 
@@ -13,7 +13,7 @@ interface SpellCheckContext {
 type SpellCheckMode = 'auto' | 'full' | 'incremental';
 
 export class SpellCheckEnhancementModal extends Modal {
-    constructor(app: App, private plugin: PerplexityPlugin) {
+    constructor(app: App, private plugin: AIVaultAssistantPlugin) {
         super(app);
     }
 
@@ -122,7 +122,7 @@ export class SpellCheckEnhancementModal extends Modal {
 
             const strategy = SpellCheckStrategyFactory.createStrategy(
                 this.plugin.settings.spellCheckMode,
-                this.plugin.perplexityService,
+                this.plugin.aiService,
                 this.plugin.settings
             );
 
@@ -149,7 +149,7 @@ export class SpellCheckEnhancementModal extends Modal {
 
         try {
             const content = await this.app.vault.read(activeFile);
-            const correctedContent = await this.plugin.perplexityService.applyCorrectionsWithChunks(content, this.plugin.settings.spellCheckLanguage);
+            const correctedContent = await this.plugin.aiService.applyCorrectionsWithChunks(content, this.plugin.settings.spellCheckLanguage);
 
             const correctedName = `${activeFile.basename}-corrected.md`;
             const correctedPath = activeFile.path.replace(`${activeFile.basename}.md`, correctedName);
@@ -179,7 +179,7 @@ export class SpellCheckEnhancementModal extends Modal {
 
         try {
             const content = await this.app.vault.read(activeFile);
-            const enhanced = await this.plugin.perplexityService.createEnhancedRewrite(content, this.plugin.settings.spellCheckLanguage);
+            const enhanced = await this.plugin.aiService.createEnhancedRewrite(content, this.plugin.settings.spellCheckLanguage);
 
             const enhancedName = `${activeFile.basename}-enhanced.md`;
             const enhancedPath = activeFile.path.replace(`${activeFile.basename}.md`, enhancedName);

@@ -3,7 +3,7 @@ import { Modal, App } from 'obsidian';
 export class HelpModal extends Modal {
     constructor(app: App, private spellCheckLanguage: string = 'en') {
         super(app);
-        this.setTitle('📖 Perplexity Vault Assistant - Help');
+        this.setTitle('📖 AI Vault Assistant - Help');
     }
 
     onOpen() {
@@ -24,7 +24,7 @@ export class HelpModal extends Modal {
                     <p><strong>1. Setup API Key:</strong></p>
                     <ul>
                         <li>Get your API key from <a href="https://perplexity.ai">perplexity.ai</a></li>
-                        <li>Go to Settings → Community Plugins → Perplexity Vault Assistant</li>
+                        <li>Go to Settings → Community Plugins → AI Vault Assistant</li>
                         <li>Enter your API key in settings</li>
                     </ul>
                     
@@ -70,7 +70,7 @@ export class HelpModal extends Modal {
                 content: `
                     <h3>🔧 Troubleshooting</h3>
                     <p><strong>API key not configured:</strong></p>
-                    <p>Go to Settings → Community Plugins → Perplexity Vault Assistant and enter your API key.</p>
+                    <p>Go to Settings → Community Plugins → AI Vault Assistant and enter your API key.</p>
                     
                     <p><strong>Rate limit exceeded:</strong></p>
                     <p>Wait 60 seconds before trying again. Consider using caching to reduce API calls.</p>

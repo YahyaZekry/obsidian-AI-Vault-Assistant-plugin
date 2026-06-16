@@ -1,10 +1,10 @@
 import { Modal, App, Setting } from 'obsidian';
-import PerplexityPlugin from '../../PerplexityPlugin';
+import { AIVaultAssistantPlugin } from '../../AIVaultAssistantPlugin';
 import { SpellCheckEnhancementModal } from './SpellCheckModal';
 import { HelpModal } from './HelpModal';
 
-export class PerplexityMainModal extends Modal {
-    constructor(app: App, private plugin: PerplexityPlugin) {
+export class AIVaultAssistantMainModal extends Modal {
+    constructor(app: App, private plugin: AIVaultAssistantPlugin) {
         super(app);
     }
 
@@ -16,7 +16,7 @@ export class PerplexityMainModal extends Modal {
             contentEl.addClass('rtl-content');
         }
 
-        contentEl.createEl('h2', { text: 'Perplexity Vault Assistant' });
+        contentEl.createEl('h2', { text: 'AI Vault Assistant' });
 
         new Setting(contentEl)
             .setName('📝 Spell Check & Enhancement')

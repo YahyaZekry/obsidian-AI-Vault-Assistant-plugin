@@ -29,19 +29,19 @@ export interface EnhancedRewriteResult {
 export type SpellCheckMode = 'auto' | 'full' | 'incremental';
 
 export interface SpellCheckContext {
-    settings?: PerplexityPluginSettings;
+    settings?: AIVaultAssistantSettings;
     onProgress?: (progress: number, message: string) => void;
     onSectionComplete?: (section: number, total: number, result: SpellCheckResult) => void;
     onModeSwitchSuggestion?: (suggestedMode: SpellCheckMode, reason: string) => void;
 }
 
-export interface PerplexityService {
+export interface AIService {
     checkSpellingAndFormat(content: string, language: string): Promise<SpellCheckResult>;
     applyCorrectionsWithChunks(content: string, language: string): Promise<string>;
     createEnhancedRewrite(content: string, language: string): Promise<string>;
 }
 
-export interface PerplexityPluginSettings {
+export interface AIVaultAssistantSettings {
     version: number;
     apiKey: string;
     spellCheckLanguage: string;
@@ -99,5 +99,3 @@ export interface SmartLinkSuggestion {
     commonThemes: string[];
     contentPreview: string;
 }
-
-

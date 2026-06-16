@@ -15,7 +15,7 @@ const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
-	entryPoints: ['src/PerplexityPlugin.ts'],
+	entryPoints: ['src/AIVaultAssistantPlugin.ts'],
 	bundle: true,
 	external: [
 		'obsidian',

@@ -1,4 +1,4 @@
-import { SpellCheckResult, SpellCheckMode, PerplexityPluginSettings, SpellCheckContext } from '../types';
+import { SpellCheckResult, SpellCheckMode, AIVaultAssistantSettings, SpellCheckContext } from '../types';
 
 export interface SpellCheckStrategy {
     check(content: string, language: string, context: SpellCheckContext): Promise<SpellCheckResult>;
@@ -118,7 +118,7 @@ export class IncrementalStrategy implements SpellCheckStrategy {
     private allResults: SpellCheckResult | null = null;
     private originalContent: string;
 
-    constructor(private service: any, settings: PerplexityPluginSettings) {
+    constructor(private service: any, settings: AIVaultAssistantSettings) {
         this.sectionSize = settings.incrementalModeSectionSize || 5000;
     }
 
@@ -221,7 +221,7 @@ export class AutoStrategy implements SpellCheckStrategy {
     private fullStrategy: FullChunkedStrategy;
     private threshold: number;
 
-    constructor(private service: any, settings: PerplexityPluginSettings) {
+    constructor(private service: any, settings: AIVaultAssistantSettings) {
         this.fullStrategy = new FullChunkedStrategy(service);
         this.threshold = settings.autoModeThreshold || 3;
     }
@@ -285,7 +285,7 @@ export class SpellCheckStrategyFactory {
     static createStrategy(
         mode: SpellCheckMode,
         service: any,
-        settings: PerplexityPluginSettings
+        settings: AIVaultAssistantSettings
     ): SpellCheckStrategy {
         switch (mode) {
             case 'full':

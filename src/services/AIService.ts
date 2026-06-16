@@ -18,7 +18,7 @@ interface SpellCheckResult {
     }>;
 }
 
-interface PerplexityPluginSettings {
+interface AIVaultAssistantSettings {
     apiKey: string;
     spellCheckLanguage: string;
     similarityThreshold: number;
@@ -49,10 +49,10 @@ interface PerplexityPluginSettings {
     allowModeSwitching: boolean;
 }
 
-export class PerplexityService {
+export class AIService {
     constructor(
         private cacheManager: CacheManager,
-        private settings: PerplexityPluginSettings
+        private settings: AIVaultAssistantSettings
     ) {}
 
     private simpleHash(str: string): string {
@@ -225,7 +225,6 @@ META_PROMPT2: Prioritize precision over recall—better to miss an error than fl
         if (jsonMatch) responseContent = jsonMatch[0];
 
         const parsed = JSON.parse(responseContent);
-        console.log('✅ API Response:', parsed); // Debug log
 
         // Add fallback context if not provided
         const result: SpellCheckResult = {
@@ -382,7 +381,7 @@ ${content}`
         const messages = [
             {
                 role: 'system',
-                content: "You are an expert Obsidian markdown editor and content strategist for " + language + ". Enhance the provided markdown file to improve clarity, structure, and Obsidian-native functionality while preserving the core meaning and intent.\n\n**ENHANCEMENT SCOPE:**\n\n**Content Improvements:**\n- Strengthen weak or vague phrasing with precise language\n- Fix logical flow between sections and paragraphs\n- Remove redundancies and filler words\n- Convert passive voice to active where it improves clarity\n- Break up overly long sentences and dense paragraphs\n- Add transitional phrases between disconnected ideas\n\n**Obsidian Structure Optimization:**\n- Improve heading hierarchy (H1→H2→H3) for logical nesting\n- Convert plain lists to proper Obsidian callouts where semantically appropriate:\n  - Use > [!NOTE] for important context\n  - Use > [!TIP] for actionable advice\n  - Use > [!WARNING] for critical caveats\n  - Use > [!EXAMPLE] for illustrative cases\n- Enhance wiki-links: [[Page]] → [[Page|Natural Link Text]] when context helps\n- Suggest relevant but currently unlinked concepts as [[Potential Links]]\n- Convert inline URLs to markdown links: [descriptive text](URL)\n- Format frontmatter cleanly (YAML style) with consistent indentation\n\n**Formatting Polish:**\n- Standardize bullet styles (- vs *) within documents\n- Ensure consistent spacing before/after headings and lists\n- Fix table alignment and column widths\n- Apply proper code block language identifiers (```python, ```javascript)\n- Clean up excessive blank lines (max 1 between paragraphs)\n\n**NON-NEGOTIABLE PRESERVATION:**\n- Do NOT change factual claims or data\n- Do NOT alter code logic inside code blocks\n- Do NOT remove existing [[wiki-links]] (improve their display text only)\n- Do NOT change the original author's voice/tone dramatically\n- Do NOT add external information not implied by the original text\n- For Arabic: Maintain original diacritics if present; don't add/remove tashkil\n\n**OUTPUT REQUIREMENTS:**\n- Return ONLY the enhanced markdown content\n- NO markdown code blocks around the output (```md or ```)\n- NO explanatory comments or \"Enhanced version:\" preamble\n- NO trailing notes about what was changed\n- Preserve document's original line ending style (LF/CRLF)"
+                content: "You are an expert Obsidian markdown editor and content strategist for " + language + ". Enhance the provided markdown file to improve clarity, structure, and Obsidian-native functionality while preserving the core meaning and intent.\n\n**ENHANCEMENT SCOPE:**\n\n**Content Improvements:**\n- Strengthen weak or vague phrasing with precise language\n- Fix logical flow between sections and paragraphs\n- Remove redundancies and filler words\n- Convert passive voice to active where it improves clarity\n- Break up overly long sentences and dense paragraphs\n- Add transitional phrases between disconnected ideas\n\n**Obsidian Structure Optimization:**\n- Improve heading hierarchy (H1→H2→H3) for logical nesting\n- Convert plain lists to proper Obsidian callouts where semantically appropriate:\n  - Use > [!NOTE] for important context\n  - Use > [!TIP] for actionable advice\n  - Use > [!WARNING] for critical caveats\n  - Use > [!EXAMPLE] for illustrative cases\n- Enhance wiki-links: [[Page]] → [[Page|Natural Link Text]] when context helps\n- Suggest relevant but currently unlinked concepts as [[Potential Links]]\n- Convert inline URLs to markdown links: [descriptive text](URL)\n- Format frontmatter cleanly (YAML style) with consistent indentation\n\n**Formatting Polish:**\n- Standardize bullet styles (- vs *) within documents\n- Ensure consistent spacing before/after headings and lists\n- Fix table alignment and column widths\n- Apply proper code block language identifiers (```python, ```javascript)\n- Clean up excessive blank lines (max 1 between paragraphs)\n\n**NON-NEGOTIABLE PRESERVATION:**\n- Do NOT change factual claims or data\n- Do NOT alter code logic inside code blocks\n- Do NOT remove existing [[wiki-links]] (improve their display text only)\n- Do NOT change the original author's voice/tone dramatically\n- Do NOT add external information not implied by the original text\n- For Arabic: Maintain original diacritics if present; don't add/remove diacritics if absent\n- Preserve the original document length within ~15%\n\n**OUTPUT FORMAT:**\n- Return the enhanced content directly (raw markdown, no JSON wrapper)\n- NO explanations, NO meta-commentary, NO \"Here's the enhanced version:\"\n- NO code fences around the output\n- Preserve all original [[wiki-links]], ![[embeds]], frontmatter, and code blocks unchanged"
             },
             {
                 role: 'user',

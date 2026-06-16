@@ -176,7 +176,7 @@ export class ErrorHandler {
         }
 
         // Also log to console for debugging
-        console.error(`[Perplexity Plugin]${context ? ` [${context}]` : ''}:`, error);
+        console.error(`[AI Vault Assistant]${context ? ` [${context}]` : ''}:`, error);
     }
 
     /**

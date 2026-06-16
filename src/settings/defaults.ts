@@ -1,8 +1,8 @@
-import { PerplexityPluginSettings } from '../types';
+import { AIVaultAssistantSettings } from '../types';
 
-export type { PerplexityPluginSettings } from '../types';
+export type { AIVaultAssistantSettings } from '../types';
 
-export const DEFAULT_SETTINGS: PerplexityPluginSettings = {
+export const DEFAULT_SETTINGS: AIVaultAssistantSettings = {
     version: 2,
     apiKey: '',
     spellCheckLanguage: 'en',

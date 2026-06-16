@@ -34,32 +34,32 @@ export class ProgressTracker {
         container.empty();
 
         // Create progress container
-        const progressContainer = container.createDiv({ cls: 'perplexity-progress-container' });
+        const progressContainer = container.createDiv({ cls: 'ai-vault-progress-container' });
 
         // Create progress bar wrapper
-        const progressBarWrapper = progressContainer.createDiv({ cls: 'perplexity-progress-bar-wrapper' });
-        this.progressBar = progressBarWrapper.createDiv({ cls: 'perplexity-progress-bar' });
+        const progressBarWrapper = progressContainer.createDiv({ cls: 'ai-vault-progress-bar-wrapper' });
+        this.progressBar = progressBarWrapper.createDiv({ cls: 'ai-vault-progress-bar' });
 
         // Create progress text
-        this.progressText = progressContainer.createDiv({ cls: 'perplexity-progress-text' });
+        this.progressText = progressContainer.createDiv({ cls: 'ai-vault-progress-text' });
         this.progressText.setText('0%');
 
         // Create time remaining text if enabled
         if (options.showTimeRemaining) {
-            this.timeRemainingText = progressContainer.createDiv({ cls: 'perplexity-time-remaining' });
+            this.timeRemainingText = progressContainer.createDiv({ cls: 'ai-vault-time-remaining' });
             this.timeRemainingText.setText('Calculating...');
         }
 
         // Create filename text if enabled
         if (options.showFilename) {
-            this.filenameText = progressContainer.createDiv({ cls: 'perplexity-filename' });
+            this.filenameText = progressContainer.createDiv({ cls: 'ai-vault-filename' });
             this.filenameText.setText('Starting...');
         }
 
         // Create cancel button if callback provided
         if (options.onCancel) {
-            const buttonContainer = progressContainer.createDiv({ cls: 'perplexity-cancel-container' });
-            this.cancelButton = buttonContainer.createEl('button', { cls: 'perplexity-cancel-button' });
+            const buttonContainer = progressContainer.createDiv({ cls: 'ai-vault-cancel-container' });
+            this.cancelButton = buttonContainer.createEl('button', { cls: 'ai-vault-cancel-button' });
             this.cancelButton.setText('Cancel');
             this.cancelButton.addEventListener('click', () => {
                 this.cancelled = true;
@@ -168,7 +168,7 @@ export class ProgressTracker {
     error(message: string): void {
         if (this.progressBar) {
             this.progressBar.style.width = '100%';
-            this.progressBar.addClass('perplexity-progress-error');
+            this.progressBar.addClass('ai-vault-progress-error');
         }
 
         if (this.progressText) {
@@ -205,7 +205,7 @@ export class ProgressTracker {
 
         if (this.progressBar) {
             this.progressBar.style.width = '0%';
-            this.progressBar.removeClass('perplexity-progress-error');
+            this.progressBar.removeClass('ai-vault-progress-error');
         }
 
         if (this.progressText) {
@@ -252,7 +252,7 @@ export class ProgressModal {
     constructor(app: App, title: string, total: number, options: ProgressOptions = {}) {
         // Create modal container
         this.modal = document.createElement('div');
-        this.modal.addClass('perplexity-progress-modal');
+        this.modal.addClass('ai-vault-progress-modal');
         this.modal.createEl('h2', { text: title });
 
         // Create progress tracker

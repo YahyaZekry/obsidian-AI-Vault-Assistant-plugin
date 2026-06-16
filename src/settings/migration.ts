@@ -1,9 +1,9 @@
-import { PerplexityPluginSettings } from '../types';
+import { AIVaultAssistantSettings } from '../types';
 
 /**
  * Versioned settings interface that extends the base settings with a version field
  */
-export interface VersionedSettings extends PerplexityPluginSettings {
+export interface VersionedSettings extends AIVaultAssistantSettings {
     version: number;
 }
 

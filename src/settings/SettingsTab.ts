@@ -1,20 +1,20 @@
 import { PluginSettingTab, Setting, App, Plugin } from 'obsidian';
-import PerplexityPlugin from '../PerplexityPlugin';
+import { AIVaultAssistantPlugin } from '../AIVaultAssistantPlugin';
 import { SpellCheckMode } from '../types';
 
-export class PerplexitySettingTab extends PluginSettingTab {
-    plugin: PerplexityPlugin;
+export class AIVaultAssistantSettingTab extends PluginSettingTab {
+    plugin: AIVaultAssistantPlugin;
 
     constructor(app: App, plugin: Plugin) {
-        super(app, plugin as PerplexityPlugin);
-        this.plugin = plugin as PerplexityPlugin;
+        super(app, plugin as AIVaultAssistantPlugin);
+        this.plugin = plugin as AIVaultAssistantPlugin;
     }
 
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Perplexity Settings' });
+        containerEl.createEl('h2', { text: 'AI Vault Assistant Settings' });
 
         new Setting(containerEl)
             .setName('API Key')

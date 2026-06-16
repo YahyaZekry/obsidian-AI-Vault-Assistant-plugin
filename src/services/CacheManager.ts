@@ -8,7 +8,7 @@ interface CacheEntry {
 
 export class CacheManager {
     private cache: Map<string, CacheEntry> = new Map();
-    private storageKey = 'perplexity-cache';
+    private storageKey = 'ai-vault-cache';
     private app: App;
 
     constructor(app: App) {
@@ -85,7 +85,7 @@ export class CacheManager {
 
     private generateKey(content: string, model: string, language: string): string {
         const hash = this.simpleHash(content + model + language);
-        return `pplx:${hash}:${model}:${language}:${Date.now()}`;
+        return `aivault:${hash}:${model}:${language}:${Date.now()}`;
     }
 
     private simpleHash(str: string): string {

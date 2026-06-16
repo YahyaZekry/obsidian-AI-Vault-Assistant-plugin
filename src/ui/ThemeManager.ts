@@ -90,19 +90,19 @@ export class ThemeManager {
         const root = document.documentElement;
         
         if (this.isDark) {
-            root.style.setProperty('--perplexity-bg-primary', 'var(--background-primary)');
-            root.style.setProperty('--perplexity-bg-secondary', 'var(--background-secondary)');
-            root.style.setProperty('--perplexity-text-primary', 'var(--text-normal)');
-            root.style.setProperty('--perplexity-text-secondary', 'var(--text-muted)');
-            root.style.setProperty('--perplexity-border', '#374151');
-            root.style.setProperty('--perplexity-shadow', '0 4px 6px -1px rgb(0 0 0 / 0.3)');
+            root.style.setProperty('--ai-vault-bg-primary', 'var(--background-primary)');
+            root.style.setProperty('--ai-vault-bg-secondary', 'var(--background-secondary)');
+            root.style.setProperty('--ai-vault-text-primary', 'var(--text-normal)');
+            root.style.setProperty('--ai-vault-text-secondary', 'var(--text-muted)');
+            root.style.setProperty('--ai-vault-border', '#374151');
+            root.style.setProperty('--ai-vault-shadow', '0 4px 6px -1px rgb(0 0 0 / 0.3)');
         } else {
-            root.style.setProperty('--perplexity-bg-primary', 'var(--background-primary)');
-            root.style.setProperty('--perplexity-bg-secondary', 'var(--background-secondary)');
-            root.style.setProperty('--perplexity-text-primary', 'var(--text-normal)');
-            root.style.setProperty('--perplexity-text-secondary', 'var(--text-muted)');
-            root.style.setProperty('--perplexity-border', '#e5e7eb');
-            root.style.setProperty('--perplexity-shadow', '0 4px 6px -1px rgb(0 0 0 / 0.1)');
+            root.style.setProperty('--ai-vault-bg-primary', 'var(--background-primary)');
+            root.style.setProperty('--ai-vault-bg-secondary', 'var(--background-secondary)');
+            root.style.setProperty('--ai-vault-text-primary', 'var(--text-normal)');
+            root.style.setProperty('--ai-vault-text-secondary', 'var(--text-muted)');
+            root.style.setProperty('--ai-vault-border', '#e5e7eb');
+            root.style.setProperty('--ai-vault-shadow', '0 4px 6px -1px rgb(0 0 0 / 0.1)');
         }
     }
 

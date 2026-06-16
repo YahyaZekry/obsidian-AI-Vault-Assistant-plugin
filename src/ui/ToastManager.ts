@@ -30,7 +30,7 @@ export class ToastManager {
      */
     private createContainer(): void {
         this.container = document.createElement('div');
-        this.container.addClass('perplexity-toast-container');
+        this.container.addClass('ai-vault-toast-container');
         document.body.appendChild(this.container);
     }
 
@@ -77,26 +77,26 @@ export class ToastManager {
         toastId: string
     ): HTMLElement {
         const toast = document.createElement('div');
-        toast.addClass('perplexity-toast');
-        toast.addClass(`perplexity-toast-${type}`);
+        toast.addClass('ai-vault-toast');
+        toast.addClass(`ai-vault-toast-${type}`);
         toast.dataset.toastId = toastId;
 
         // Icon
         const iconEl = document.createElement('span');
-        iconEl.addClass('perplexity-toast-icon');
+        iconEl.addClass('ai-vault-toast-icon');
         iconEl.textContent = icon;
         toast.appendChild(iconEl);
 
         // Message
         const messageEl = document.createElement('span');
-        messageEl.addClass('perplexity-toast-message');
+        messageEl.addClass('ai-vault-toast-message');
         messageEl.textContent = message;
         toast.appendChild(messageEl);
 
         // Dismiss button
         if (dismissible) {
             const dismissBtn = document.createElement('button');
-            dismissBtn.addClass('perplexity-toast-dismiss');
+            dismissBtn.addClass('ai-vault-toast-dismiss');
             dismissBtn.innerHTML = '&times;';
             dismissBtn.setAttribute('aria-label', 'Dismiss notification');
             dismissBtn.addEventListener('click', () => {

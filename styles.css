@@ -1,5 +1,5 @@
 /* ===================================
-   Perplexity Plugin - Professional Design System
+   AI Vault Assistant - Design System
    =================================== */
 
 /* CSS Custom Properties - Professional Color Palette */
@@ -109,9 +109,9 @@
    =================================== */
 
 /* Target both direct class and Obsidian's sidebar structure */
-.perplexity-sidebar,
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content,
-.nav-folder:has(.perplexity-sidebar) {
+.ai-vault-sidebar,
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content,
+.nav-folder:has(.ai-vault-sidebar) {
     width: 100% !important;
     min-width: 280px !important;
     max-width: 500px !important;
@@ -128,14 +128,14 @@
 }
 
 /* Ensure the view-content wrapper doesn't override our constraints */
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content {
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 0 !important;
 }
 
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] .perplexity-sidebar {
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] .ai-vault-sidebar {
     flex: 0 0 auto;
     width: 100% !important;
     max-width: 500px !important;
@@ -806,32 +806,32 @@
     =================================== */
 
 /* Base RTL container styles - target multiple selectors for specificity */
-/* NOTE: We keep .perplexity-sidebar as LTR for scrollbar positioning */
+/* NOTE: We keep .ai-vault-sidebar as LTR for scrollbar positioning */
 /* RTL direction is applied to .sidebar-container instead */
-.perplexity-sidebar {
+.ai-vault-sidebar {
     /* Always keep LTR for scrollbar on right side */
     direction: ltr !important;
 }
 
-.perplexity-sidebar[dir="rtl"],
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content[dir="rtl"],
-[dir="rtl"].perplexity-sidebar {
+.ai-vault-sidebar[dir="rtl"],
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content[dir="rtl"],
+[dir="rtl"].ai-vault-sidebar {
     /* Keep sidebar LTR for scrollbar, text alignment handled in sidebar-container */
     direction: ltr !important;
     text-align: left !important;
 }
 
 /* Explicit LTR styles for English content */
-.perplexity-sidebar[dir="ltr"],
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] .view-content[dir="ltr"],
-[dir="ltr"].perplexity-sidebar {
+.ai-vault-sidebar[dir="ltr"],
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content[dir="ltr"],
+[dir="ltr"].ai-vault-sidebar {
     direction: ltr !important;
     text-align: left !important;
 }
 
 /* Ensure RTL is applied even if set on parent container */
-.workspace-leaf-content[data-type="perplexity-sidebar-view"][dir="rtl"] .view-content,
-.workspace-leaf-content[data-type="perplexity-sidebar-view"] [dir="rtl"] {
+.workspace-leaf-content[data-type="ai-vault-assistant-view"][dir="rtl"] .view-content,
+.workspace-leaf-content[data-type="ai-vault-assistant-view"] [dir="rtl"] {
     direction: rtl !important;
     text-align: right !important;
 }
@@ -1053,7 +1053,7 @@
    =================================== */
 
 /* Base responsive styles - all widths */
-/* Note: max-width is already set to 500px in the main .perplexity-sidebar rule */
+/* Note: max-width is already set to 500px in the main .ai-vault-sidebar rule */
 
 .sidebar-container {
     width: 100%;
@@ -1093,7 +1093,7 @@
 
 /* Narrow sidebar - 200px to 300px */
 @media (max-width: 300px) {
-    .perplexity-sidebar {
+    .ai-vault-sidebar {
         padding: var(--spacing-sm);
     }
     
@@ -1165,7 +1165,7 @@
 
 /* Medium sidebar - 300px to 400px */
 @media (min-width: 301px) and (max-width: 400px) {
-    .perplexity-sidebar {
+    .ai-vault-sidebar {
         padding: var(--spacing-sm) var(--spacing-md);
     }
     
@@ -1203,7 +1203,7 @@
 
 /* Very narrow - under 200px */
 @media (max-width: 199px) {
-    .perplexity-sidebar {
+    .ai-vault-sidebar {
         padding: var(--spacing-xs);
         font-size: var(--font-size-xs);
     }
@@ -1266,33 +1266,33 @@
    Scrollbar Styling
    =================================== */
 
-.perplexity-sidebar::-webkit-scrollbar {
+.ai-vault-sidebar::-webkit-scrollbar {
     width: 8px;
 }
 
-.perplexity-sidebar::-webkit-scrollbar-track {
+.ai-vault-sidebar::-webkit-scrollbar-track {
     background: var(--color-slate-100);
     border-radius: var(--radius-md);
 }
 
-.perplexity-sidebar::-webkit-scrollbar-thumb {
+.ai-vault-sidebar::-webkit-scrollbar-thumb {
     background: var(--color-slate-300);
     border-radius: var(--radius-md);
 }
 
-.perplexity-sidebar::-webkit-scrollbar-thumb:hover {
+.ai-vault-sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--color-slate-400);
 }
 
-.theme-dark .perplexity-sidebar::-webkit-scrollbar-track {
+.theme-dark .ai-vault-sidebar::-webkit-scrollbar-track {
     background: var(--color-slate-200);
 }
 
-.theme-dark .perplexity-sidebar::-webkit-scrollbar-thumb {
+.theme-dark .ai-vault-sidebar::-webkit-scrollbar-thumb {
     background: var(--color-slate-500);
 }
 
-.theme-dark .perplexity-sidebar::-webkit-scrollbar-thumb:hover {
+.theme-dark .ai-vault-sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--color-slate-600);
 }
 
@@ -1724,6 +1724,102 @@
     margin-top: var(--spacing-sm);
     display: flex;
     justify-content: flex-end;
+}
+
+/* ===================================
+   Line Number Badge
+   =================================== */
+
+.line-number-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-blue-600);
+    background-color: var(--color-blue-50);
+    border: 1px solid var(--color-blue-200);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xs);
+    width: fit-content;
+}
+
+.line-number-badge-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px var(--spacing-xs);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-slate-500);
+    background-color: var(--color-slate-100);
+    border: 1px solid var(--color-slate-200);
+    border-radius: var(--radius-sm);
+}
+
+.line-number-icon {
+    font-size: 10px;
+}
+
+.line-number-text {
+    white-space: nowrap;
+}
+
+/* Clickable elements */
+.clickable {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.clickable:hover {
+    background-color: var(--color-blue-100);
+    border-color: var(--color-blue-300);
+    transform: translateY(-1px);
+}
+
+.line-number-badge-small.clickable:hover {
+    background-color: var(--color-slate-200);
+    border-color: var(--color-slate-300);
+}
+
+/* Formatting Issues Actions */
+.formatting-issues-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    justify-content: center;
+}
+
+/* Editor highlight effect */
+.ai-vault-highlight-active .cm-selectionBackground,
+.ai-vault-highlight-active .CodeMirror-selectedtext {
+    background-color: var(--color-warning-500) !important;
+    animation: highlight-fade 3s ease-out forwards;
+}
+
+@keyframes highlight-fade {
+    0% {
+        background-color: var(--color-warning-500);
+        opacity: 1;
+    }
+    70% {
+        background-color: var(--color-warning-500);
+        opacity: 1;
+    }
+    100% {
+        background-color: transparent;
+        opacity: 0;
+    }
+}
+
+/* RTL for line number badges */
+[dir="rtl"] .line-number-badge {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .line-number-badge-small {
+    flex-direction: row-reverse;
 }
 
 .btn-warning {

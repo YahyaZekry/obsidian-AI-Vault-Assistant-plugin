@@ -1,4 +1,4 @@
-# Perplexity Vault Assistant 🐻
+# AI Vault Assistant
 
 AI-powered vault management with spell checking, formatting, and smart linking using the Perplexity API.
 
@@ -82,21 +82,21 @@ The plugin automatically excludes files that Perplexity AI cannot read:
 ## Installation
 
 ### From GitHub Releases (Recommended)
-1. Download the latest release from the [Releases page](https://github.com/yahyaZekry/obsidian-perplexity-plugin/releases)
-2. Extract the files to your vault's `.obsidian/plugins/obsidian-perplexity-plugin/` directory
+1. Download the latest release from the [Releases page](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/releases)
+2. Extract the files to your vault's `.obsidian/plugins/ai-vault-assistant/` directory
 3. Enable the plugin in Obsidian's Community Plugins settings
 
 ### Manual Installation
 1. Clone this repository
 2. Run `npm install` to install dependencies  
 3. Run `npm run build` to compile the plugin
-4. Copy `main.js`, `styles.css`, and `manifest.json` to your vault's `.obsidian/plugins/obsidian-perplexity-plugin/` directory
+4. Copy `main.js`, `styles.css`, and `manifest.json` to your vault's `.obsidian/plugins/ai-vault-assistant/` directory
 5. Enable the plugin in Obsidian's Community Plugins settings
 
 ## Setup
 
 1. Get a Perplexity API key from [perplexity.ai](https://perplexity.ai)
-2. Open Obsidian Settings → Community Plugins → Perplexity Vault Assistant
+2. Open Obsidian Settings → Community Plugins → AI Vault Assistant
 3. Enter your API key in the settings
 4. Select your preferred language (Arabic users: RTL support is automatically enabled)
 5. Configure file exclusions and smart linking preferences
@@ -107,26 +107,26 @@ The plugin automatically excludes files that Perplexity AI cannot read:
 ### Main Features
 
 **🧠 Vault Analysis**
-- Command: "Perplexity: Analyze entire vault (MD files only)"
+- Command: "AI Vault Assistant: Analyze vault"
 - Analyzes only markdown files in your vault
 - Shows file type breakdown and exclusions
 - Provides insights about your content themes
 
 **📝 Spell Check & Format**  
-- Command: "Perplexity: Check current file spelling and format"
+- Command: "AI Vault Assistant: Check spelling and format"
 - Right-click menu option on files
 - Context-aware checking that preserves markdown syntax
 - Supports Arabic, English, Spanish, French, and German
 
 **🔗 Smart Links with AI Reasoning**
-- Command: "Perplexity: Generate smart links with detailed reasoning"
+- Command: "AI Vault Assistant: Generate smart links"
 - Two modes: Current file analysis or vault-wide analysis
 - Detailed explanations for each suggestion
 - Shows connection types and common themes
 - Preview target files before adding links
 
 **📖 Help & Documentation**
-- Command: "Perplexity: Show help and documentation"
+- Command: "AI Vault Assistant: Show help"
 - Complete built-in documentation
 - Usage examples and troubleshooting
 
@@ -146,7 +146,7 @@ The plugin automatically excludes files that Perplexity AI cannot read:
 ## Configuration
 
 ### API Settings
-- **Perplexity API Key**: Your API key from perplexity.ai
+- **API Key**: Your API key from perplexity.ai
 - **Language**: Primary language for spell checking and analysis
 - **RTL Support**: Automatic for Arabic, manual toggle for other RTL languages
 
@@ -241,7 +241,7 @@ npm run dev
 ```
 
 ### Adding New Languages
-1. Update the `getLanguageInstructions()` method in `PerplexityService`
+1. Update the language-specific logic in `AIService`
 2. Add language option to settings dropdown
 3. Test with sample content in the target language
 4. Update documentation
@@ -280,7 +280,7 @@ Your support helps:
 ### Common Issues
 
 **"API key not configured"**
-- Go to Settings → Community Plugins → Perplexity Vault Assistant
+- Go to Settings → Community Plugins → AI Vault Assistant
 - Enter your API key from perplexity.ai
 
 **Smart links not showing relevant results**
@@ -309,10 +309,10 @@ Your support helps:
 Enable Developer Tools in Obsidian (View → Developer → Toggle Developer Tools) to see detailed logs and error messages.
 
 ### Getting Help
-1. Check the built-in help system (Command: "Perplexity: Show help and documentation")
+1. Check the built-in help system (Command: "AI Vault Assistant: Show help")
 2. Review this README for setup and usage instructions
-3. Report bugs on [GitHub Issues](https://github.com/yahyaZekry/obsidian-perplexity-plugin/issues)
-4. Join discussions on [GitHub Discussions](https://github.com/yahyaZekry/obsidian-perplexity-plugin/discussions)
+3. Report bugs on [GitHub Issues](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/issues)
+4. Join discussions on [GitHub Discussions](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/discussions)
 
 ## Changelog
 
@@ -365,4 +365,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
   </a>
 </div>
 
-**[☕ Support the Developer](https://buymeacoffee.com/YahyaZekry)** • **[🐛 Report Issues](https://github.com/yahyaZekry/obsidian-perplexity-plugin/issues)** • **[💡 Request Features](https://github.com/yahyaZekry/obsidian-perplexity-plugin/discussions)**
+**[☕ Support the Developer](https://buymeacoffee.com/YahyaZekry)** • **[🐛 Report Issues](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/issues)** • **[💡 Request Features](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/discussions)**

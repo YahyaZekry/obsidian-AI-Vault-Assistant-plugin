@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { VaultAnalysisResult, SmartLinkSuggestion, PerplexityPluginSettings } from '../types';
+import { VaultAnalysisResult, SmartLinkSuggestion, AIVaultAssistantSettings } from '../types';
 import { CacheManager } from './CacheManager';
 import { FileFilter } from './FileFilter';
 
@@ -9,7 +9,7 @@ export class VaultAnalyzer {
     constructor(
         private app: App,
         private cacheManager: CacheManager,
-        private settings: PerplexityPluginSettings
+        private settings: AIVaultAssistantSettings
     ) {
         this.fileFilter = new FileFilter(settings);
     }
@@ -145,7 +145,7 @@ Return ONLY the JSON array, no explanations.`
     }
 
     private getApiKey(): string {
-        const plugin = (this.app as any).plugins.plugins['obsidian-perplexity-plugin'];
+        const plugin = (this.app as any).plugins.plugins['ai-vault-assistant'];
         return plugin?.settings?.apiKey || '';
     }
 

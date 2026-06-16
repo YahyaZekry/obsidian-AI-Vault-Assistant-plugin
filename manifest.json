@@ -1,9 +1,9 @@
 {
-  "id": "obsidian-perplexity-plugin",
-  "name": "Perplexity Vault Assistant",
+  "id": "ai-vault-assistant",
+  "name": "AI Vault Assistant",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
-  "description": "AI-powered vault management with spell checking, formatting, and smart linking using Perplexity API. Supports Arabic and multiple languages.",
+  "description": "AI-powered vault management with spell checking, formatting, and smart linking. Supports multiple AI providers and languages including Arabic.",
   "author": "Yahya Zekry",
   "authorUrl": "https://github.com/yahyaZekry",
   "fundingUrl": {
@@ -11,9 +11,9 @@
   },
   "isDesktopOnly": false,
   "views": {
-    "perplexity-sidebar": {
-      "type": "perplexity-sidebar",
-      "name": "Perplexity Sidebar",
+    "ai-vault-sidebar": {
+      "type": "ai-vault-sidebar",
+      "name": "AI Vault Sidebar",
       "icon": "brain"
     }
   }

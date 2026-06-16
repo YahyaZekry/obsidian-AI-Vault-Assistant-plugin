@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-perplexity-plugin",
+  "name": "ai-vault-assistant",
   "version": "1.0.0",
-  "description": "AI-powered vault management with Perplexity API",
+  "description": "AI-powered vault management with multi-provider AI support",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -11,10 +11,10 @@
   },
   "keywords": [
     "obsidian",
-    "plugin", 
-    "perplexity",
+    "plugin",
     "ai",
-    "spell-check"
+    "spell-check",
+    "vault"
   ],
   "author": "Yahya Zekry",
   "license": "MIT",

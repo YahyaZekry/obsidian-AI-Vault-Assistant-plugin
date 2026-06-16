@@ -1,11 +1,11 @@
-import { ItemView, WorkspaceLeaf, TFile, Notice } from 'obsidian';
-import { PerplexityPlugin } from '../PerplexityPlugin';
+import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView, Editor, EditorPosition } from 'obsidian';
+import { AIVaultAssistantPlugin } from '../AIVaultAssistantPlugin';
 import { SpellCheckResult } from '../types';
 
-export const SIDEBAR_VIEW_TYPE = 'perplexity-sidebar-view';
+export const SIDEBAR_VIEW_TYPE = 'ai-vault-assistant-view';
 
 export class SidebarView extends ItemView {
-    private plugin: PerplexityPlugin;
+    private plugin: AIVaultAssistantPlugin;
     private currentFile: TFile | null = null;
     private spellCheckResults: SpellCheckResult | null = null;
     private selectedCorrections: Set<number> = new Set();
@@ -13,10 +13,12 @@ export class SidebarView extends ItemView {
     private undoHistory: Array<{file: TFile, content: string}> = [];
     private isProcessing: boolean = false;
 
-    constructor(leaf: WorkspaceLeaf, plugin: PerplexityPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: AIVaultAssistantPlugin) {
         super(leaf);
         this.plugin = plugin;
+        console.log('🔍 [DEBUG] SidebarView constructor called');
         this.registerEvent(this.app.workspace.on('active-leaf-change', () => {
+            console.log('🔍 [DEBUG] active-leaf-change event fired');
             this.updateActiveFile();
         }));
     }
@@ -26,7 +28,7 @@ export class SidebarView extends ItemView {
     }
 
     public getDisplayText(): string {
-        return 'Perplexity Assistant';
+        return 'AI Vault Assistant';
     }
 
     public getIcon(): string {
@@ -34,8 +36,10 @@ export class SidebarView extends ItemView {
     }
 
     public async onOpen(): Promise<void> {
+        console.log('🔍 [DEBUG] onOpen() called');
         this.updateActiveFile();
         await this.render();
+        console.log('🔍 [DEBUG] onOpen() completed');
     }
 
     public async onClose(): Promise<void> {
@@ -43,6 +47,10 @@ export class SidebarView extends ItemView {
     }
 
     private updateActiveFile(): void {
+        console.log('🔍 [DEBUG] updateActiveFile() called', {
+            previousFile: this.currentFile?.path,
+            newFile: this.app.workspace.getActiveFile()?.path
+        });
         this.currentFile = this.app.workspace.getActiveFile();
         this.refresh();
     }
@@ -56,6 +64,9 @@ export class SidebarView extends ItemView {
     }
 
     private refresh(): void {
+        console.log('🔍 [DEBUG] refresh() called', {
+            hasContainer: !!this.containerEl
+        });
         if (this.containerEl) {
             this.render();
         }
@@ -69,9 +80,15 @@ export class SidebarView extends ItemView {
     }
 
     private async render(): Promise<void> {
+        console.log('🔍 [DEBUG] render() called', {
+            currentFile: this.currentFile?.path,
+            hasContainer: !!this.containerEl,
+            stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
+        });
+        
         const container = this.containerEl;
         container.empty();
-        container.addClass('perplexity-sidebar');
+        container.addClass('ai-vault-sidebar');
 
         // Check if RTL is enabled (Arabic language or RTL support setting)
         const isRTL = this.plugin.settings.spellCheckLanguage === 'ar' || this.plugin.settings.rtlSupport;
@@ -94,7 +111,7 @@ export class SidebarView extends ItemView {
 
         // Header section
         const header = mainContainer.createDiv({ cls: 'sidebar-header' });
-        header.createDiv({ cls: 'sidebar-title', text: 'Perplexity Assistant' });
+        header.createDiv({ cls: 'sidebar-title', text: 'AI Vault Assistant' });
 
         if (!this.currentFile) {
             this.renderEmptyState(mainContainer);
@@ -268,6 +285,15 @@ export class SidebarView extends ItemView {
         // Content (right side)
         const content = mainContent.createDiv({ cls: 'correction-content' });
 
+        // Line number badge (clickable to scroll)
+        if (correction.line) {
+            const lineBadge = content.createDiv({ cls: 'line-number-badge clickable' });
+            lineBadge.createSpan({ cls: 'line-number-icon', text: '📍' });
+            lineBadge.createSpan({ cls: 'line-number-text', text: `Line ${correction.line}` });
+            lineBadge.addEventListener('click', () => this.scrollToLine(correction.line, correction.original));
+            lineBadge.setAttr('title', 'Click to jump to line');
+        }
+
         // Original text
         const originalSection = content.createDiv({ cls: 'correction-section original' });
         const originalLabel = originalSection.createDiv({ cls: 'correction-label', text: 'Original' });
@@ -326,11 +352,13 @@ export class SidebarView extends ItemView {
             text: `${Math.round(confidenceScore)}%`
         });
 
-        // Context if available (100% width at bottom)
+        // Context if available (100% width at bottom) - clickable to scroll
         if (correction.context) {
-            const context = item.createDiv({ cls: 'correction-context' });
+            const context = item.createDiv({ cls: 'correction-context clickable' });
             context.createDiv({ cls: 'context-label', text: 'Context' });
-            context.createDiv({ cls: 'context-text', text: correction.context });
+            const contextText = context.createDiv({ cls: 'context-text', text: correction.context });
+            context.addEventListener('click', () => this.scrollToLine(correction.line, correction.original));
+            context.setAttr('title', 'Click to jump to line');
         }
     }
 
@@ -339,6 +367,17 @@ export class SidebarView extends ItemView {
         const header = section.createDiv({ cls: 'formatting-issues-header' });
         header.createSpan({ cls: 'formatting-issues-title', text: '⚠️ Formatting Issues' });
         header.createSpan({ cls: 'formatting-issues-count', text: `${formattingIssues.length} found` });
+
+        // Add "Fix All Formatting Issues" button
+        const fixableIssues = formattingIssues.filter((issue: any) => issue.fixable && issue.originalText && issue.suggestedText);
+        if (fixableIssues.length > 0) {
+            const actions = section.createDiv({ cls: 'formatting-issues-actions' });
+            const fixAllBtn = actions.createEl('button', {
+                cls: 'btn btn-warning btn-small',
+                text: `🔧 Fix All (${fixableIssues.length})`
+            });
+            fixAllBtn.addEventListener('click', () => this.applyAllFormattingFixes());
+        }
 
         const issuesList = section.createDiv({ cls: 'formatting-issues-list' });
 
@@ -350,11 +389,18 @@ export class SidebarView extends ItemView {
     private renderFormattingIssueItem(container: HTMLElement, issue: any, index: number): void {
         const item = container.createDiv({ cls: 'formatting-issue-item' });
 
-        // Issue header with line number
+        // Issue header with line number (clickable)
         const issueHeader = item.createDiv({ cls: 'formatting-issue-header' });
         issueHeader.createSpan({ cls: 'formatting-issue-type', text: issue.type || 'Formatting' });
         if (issue.line) {
-            issueHeader.createSpan({ cls: 'formatting-issue-line', text: `Line ${issue.line}` });
+            const lineBadge = issueHeader.createDiv({ cls: 'line-number-badge-small clickable' });
+            lineBadge.createSpan({ cls: 'line-number-icon', text: '📍' });
+            lineBadge.createSpan({ cls: 'line-number-text', text: `Line ${issue.line}` });
+            lineBadge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.scrollToLine(issue.line, issue.originalText);
+            });
+            lineBadge.setAttr('title', 'Click to jump to line');
         }
 
         // Issue description
@@ -419,6 +465,7 @@ export class SidebarView extends ItemView {
     }
 
     private renderQuickActions(container: HTMLElement): void {
+        console.log('🔍 [DEBUG] renderQuickActions() called');
         const section = container.createDiv({ cls: 'card quick-actions-card' });
         const header = section.createDiv({ cls: 'card-header' });
         header.createSpan({ cls: 'card-title', text: 'Quick Actions' });
@@ -435,7 +482,10 @@ export class SidebarView extends ItemView {
             cls: 'action-btn reanalyze-btn',
             text: '🔄 Reanalyze' 
         });
-        reanalyzeBtn.addEventListener('click', () => this.runSpellCheck());
+        reanalyzeBtn.addEventListener('click', () => {
+            console.log('🔍 [DEBUG] Reanalyze button clicked');
+            this.runSpellCheck();
+        });
 
         const copyContentBtn = actions.createEl('button', { 
             cls: 'action-btn copy-btn',
@@ -451,7 +501,14 @@ export class SidebarView extends ItemView {
     }
 
     private async runSpellCheck(): Promise<void> {
+        console.log('🔍 [DEBUG] runSpellCheck called', {
+            currentFile: this.currentFile?.path,
+            isProcessing: this.isProcessing,
+            hasSpellCheckResults: !!this.spellCheckResults
+        });
+        
         if (!this.currentFile || this.isProcessing) {
+            console.log('🔍 [DEBUG] runSpellCheck early return - conditions not met');
             return;
         }
 
@@ -460,7 +517,7 @@ export class SidebarView extends ItemView {
 
         try {
             const content = await this.app.vault.read(this.currentFile);
-            const service = (this.plugin as any).perplexityService;
+            const service = (this.plugin as any).aiService;
             
             if (service) {
                 const language = this.plugin.settings.spellCheckLanguage;
@@ -647,5 +704,140 @@ export class SidebarView extends ItemView {
         this.appliedCorrections.clear();
         this.refresh();
         new Notice('Results cleared');
+    }
+
+    /**
+     * Scroll to a specific line in the active editor
+     * @param lineNumber - The line number (1-based)
+     * @param highlightText - Optional text to highlight in the editor
+     */
+    private scrollToLine(lineNumber: number, highlightText?: string): void {
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeView) {
+            new Notice('Please open the file in editor mode');
+            return;
+        }
+
+        const editor = activeView.editor;
+        const lineCount = editor.lineCount();
+
+        if (lineNumber > 0 && lineNumber <= lineCount) {
+            // Set cursor to the line
+            editor.setCursor({ line: lineNumber - 1, ch: 0 });
+            
+            // Scroll the line into view
+            editor.scrollIntoView({
+                from: { line: lineNumber - 1, ch: 0 },
+                to: { line: lineNumber - 1, ch: 0 }
+            });
+
+            // Highlight text if provided
+            if (highlightText) {
+                this.highlightTextInEditor(editor, lineNumber, highlightText);
+            }
+        }
+    }
+
+    /**
+     * Highlight specific text in the editor temporarily
+     * Uses selection to highlight the text, then clears after a few seconds
+     */
+    private highlightTextInEditor(editor: Editor, lineNumber: number, text: string): void {
+        const lineContent = editor.getLine(lineNumber - 1);
+        
+        // Find the text position in the line
+        const textIndex = lineContent.indexOf(text);
+        if (textIndex === -1) {
+            // Try case-insensitive search
+            const lowerLine = lineContent.toLowerCase();
+            const lowerText = text.toLowerCase();
+            const index = lowerLine.indexOf(lowerText);
+            if (index !== -1) {
+                const actualText = lineContent.substring(index, index + text.length);
+                this.setSelectionAndHighlight(editor, lineNumber - 1, index, actualText);
+            }
+            return;
+        }
+
+        this.setSelectionAndHighlight(editor, lineNumber - 1, textIndex, text);
+    }
+
+    /**
+     * Set selection and create temporary highlight effect
+     */
+    private setSelectionAndHighlight(editor: Editor, line: number, ch: number, text: string): void {
+        const from: EditorPosition = { line, ch };
+        const to: EditorPosition = { line, ch: ch + text.length };
+        
+        // Set selection to highlight the text
+        editor.setSelection(from, to);
+
+        // Add a visual highlight decoration via CSS class on the editor
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (activeView) {
+            const editorEl = (activeView as any).editorEl as HTMLElement;
+            if (editorEl) {
+                editorEl.addClass('ai-vault-highlight-active');
+                
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    editorEl.removeClass('ai-vault-highlight-active');
+                    // Clear selection
+                    const cursor = editor.getCursor();
+                    editor.setSelection(cursor, cursor);
+                }, 3000);
+            }
+        }
+    }
+
+    /**
+     * Apply all formatting fixes at once
+     */
+    private async applyAllFormattingFixes(): Promise<void> {
+        if (!this.spellCheckResults || !this.currentFile || this.isProcessing) {
+            return;
+        }
+
+        const fixableIssues = this.spellCheckResults.formattingIssues.filter(
+            (issue: any) => issue.fixable && issue.originalText && issue.suggestedText
+        );
+
+        if (fixableIssues.length === 0) {
+            new Notice('No fixable formatting issues');
+            return;
+        }
+
+        this.isProcessing = true;
+        this.showProcessingState();
+
+        try {
+            let content = await this.app.vault.read(this.currentFile);
+
+            // Save for undo
+            this.undoHistory.push({ file: this.currentFile, content });
+
+            // Apply all formatting fixes
+            for (const issue of fixableIssues) {
+                if (issue.originalText && issue.suggestedText) {
+                    const regex = new RegExp(issue.originalText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                    content = content.replace(regex, issue.suggestedText);
+                }
+            }
+
+            await this.app.vault.modify(this.currentFile, content);
+
+            // Remove all fixable issues from the list
+            this.spellCheckResults.formattingIssues = this.spellCheckResults.formattingIssues.filter(
+                (issue: any) => !issue.fixable
+            );
+
+            this.refresh();
+            new Notice(`Applied ${fixableIssues.length} formatting fixes`);
+        } catch (error) {
+            new Notice('Failed to apply formatting fixes: ' + (error as Error).message);
+        } finally {
+            this.isProcessing = false;
+            this.refresh();
+        }
     }
 }

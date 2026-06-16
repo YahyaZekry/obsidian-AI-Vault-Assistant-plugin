@@ -1,5 +1,5 @@
-import { Modal, App, Notice, TFile, MarkdownView } from 'obsidian';
-import PerplexityPlugin from '../../PerplexityPlugin';
+import { Modal, App, Notice, TFile, MarkdownView, Editor, EditorPosition } from 'obsidian';
+import { AIVaultAssistantPlugin } from '../../AIVaultAssistantPlugin';
 
 interface SpellCheckResult {
     corrections: Array<{
@@ -20,7 +20,7 @@ interface SpellCheckResult {
 }
 
 export class SpellCheckResultsModal extends Modal {
-    constructor(app: App, private file: TFile, private result: SpellCheckResult, private plugin: PerplexityPlugin) {
+    constructor(app: App, private file: TFile, private result: SpellCheckResult, private plugin: AIVaultAssistantPlugin) {
         super(app);
         this.setTitle(`Check Results - ${this.file.basename}`);
     }
@@ -72,7 +72,7 @@ export class SpellCheckResultsModal extends Modal {
                     if (markElement) {
                         (markElement as any).style.cursor = 'pointer';
                         (markElement as any).style.textDecoration = 'underline';
-                        (markElement as any).addEventListener('click', () => this.scrollToLine(correction.line));
+                        (markElement as any).addEventListener('click', () => this.scrollToLine(correction.line, correction.original));
                     }
                 } catch (error) {
                     contextText.textContent = context;
@@ -128,7 +128,7 @@ export class SpellCheckResultsModal extends Modal {
                         if (markElement) {
                             (markElement as any).style.cursor = 'pointer';
                             (markElement as any).style.textDecoration = 'underline';
-                            (markElement as any).addEventListener('click', () => this.scrollToLine(issue.line));
+                            (markElement as any).addEventListener('click', () => this.scrollToLine(issue.line, issue.originalText));
                         }
                     } catch (error) {
                         contextText.textContent = issue.originalText;
@@ -213,7 +213,7 @@ export class SpellCheckResultsModal extends Modal {
         }
     }
 
-    private scrollToLine(lineNumber: number) {
+    private scrollToLine(lineNumber: number, highlightText?: string) {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) {
             new Notice('Please open the file in editor mode');
@@ -224,11 +224,70 @@ export class SpellCheckResultsModal extends Modal {
         const lineCount = editor.lineCount();
 
         if (lineNumber > 0 && lineNumber <= lineCount) {
+            // Set cursor to the line
             editor.setCursor({ line: lineNumber - 1, ch: 0 });
+            
+            // Scroll the line into view
             editor.scrollIntoView({
                 from: { line: lineNumber - 1, ch: 0 },
                 to: { line: lineNumber - 1, ch: 0 }
             });
+
+            // Highlight text if provided
+            if (highlightText) {
+                this.highlightTextInEditor(editor, lineNumber, highlightText);
+            }
+        }
+    }
+
+    /**
+     * Highlight specific text in the editor temporarily
+     */
+    private highlightTextInEditor(editor: Editor, lineNumber: number, text: string): void {
+        const lineContent = editor.getLine(lineNumber - 1);
+        
+        // Find the text position in the line
+        const textIndex = lineContent.indexOf(text);
+        if (textIndex === -1) {
+            // Try case-insensitive search
+            const lowerLine = lineContent.toLowerCase();
+            const lowerText = text.toLowerCase();
+            const index = lowerLine.indexOf(lowerText);
+            if (index !== -1) {
+                const actualText = lineContent.substring(index, index + text.length);
+                this.setSelectionAndHighlight(editor, lineNumber - 1, index, actualText);
+            }
+            return;
+        }
+
+        this.setSelectionAndHighlight(editor, lineNumber - 1, textIndex, text);
+    }
+
+    /**
+     * Set selection and create temporary highlight effect
+     */
+    private setSelectionAndHighlight(editor: Editor, line: number, ch: number, text: string): void {
+        const from: EditorPosition = { line, ch };
+        const to: EditorPosition = { line, ch: ch + text.length };
+        
+        // Set selection to highlight the text
+        editor.setSelection(from, to);
+
+        // Add a visual highlight decoration via CSS class on the editor
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (activeView) {
+            const editorEl = (activeView as any).editorEl as HTMLElement;
+            if (editorEl) {
+                editorEl.addClass('ai-vault-highlight-active');
+                
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    editorEl.removeClass('ai-vault-highlight-active');
+                    // Clear selection
+                    const cursor = editor.getCursor();
+                    editor.setSelection(cursor, cursor);
+                }, 3000);
+            }
         }
     }
 
