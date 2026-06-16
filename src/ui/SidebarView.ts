@@ -562,20 +562,29 @@ export class SidebarView extends ItemView {
 
         try {
             const content = await this.app.vault.read(this.currentFile);
+            const lines = content.split('\n');
 
             // Save for undo
             this.undoHistory.push({ file: this.currentFile, content });
 
-            // Replace all occurrences using global regex (like the old working code)
-            const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-            const newContent = content.replace(regex, correction.suggested);
-            await this.app.vault.modify(this.currentFile, newContent);
+            // Apply correction only at the reported line
+            const lineIndex = correction.line - 1;
+            if (lineIndex >= 0 && lineIndex < lines.length) {
+                const lineContent = lines[lineIndex];
+                const regex = new RegExp(
+                    correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                );
+                lines[lineIndex] = lineContent.replace(regex, correction.suggested);
+                await this.app.vault.modify(this.currentFile, lines.join('\n'));
 
-            this.appliedCorrections.add(index);
-            this.selectedCorrections.delete(index);
-            this.refresh();
+                this.appliedCorrections.add(index);
+                this.selectedCorrections.delete(index);
+                this.refresh();
 
-            new Notice('Correction applied successfully');
+                new Notice('Correction applied successfully');
+            } else {
+                new Notice('Could not find line ' + correction.line + ' in file');
+            }
         } catch (error) {
             new Notice('Failed to apply correction: ' + (error as Error).message);
         } finally {
@@ -592,25 +601,32 @@ export class SidebarView extends ItemView {
         this.showProcessingState();
 
         try {
-            let content = await this.app.vault.read(this.currentFile);
+            const content = await this.app.vault.read(this.currentFile);
+            const lines = content.split('\n');
+            const corrections = this.spellCheckResults.corrections;
 
             // Save for undo
             this.undoHistory.push({ file: this.currentFile, content });
 
-            // Apply all corrections using global regex (like the old working code)
-            for (let i = 0; i < this.spellCheckResults.corrections.length; i++) {
-                const correction = this.spellCheckResults.corrections[i];
+            for (let i = 0; i < corrections.length; i++) {
+                const c = corrections[i];
                 
                 if (this.appliedCorrections.has(i)) {
                     continue;
                 }
 
-                const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                content = content.replace(regex, correction.suggested);
-                this.appliedCorrections.add(i);
+                const lineIndex = c.line - 1;
+                if (lineIndex >= 0 && lineIndex < lines.length) {
+                    const lineContent = lines[lineIndex];
+                    const regex = new RegExp(
+                        c.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                    );
+                    lines[lineIndex] = lineContent.replace(regex, c.suggested);
+                    this.appliedCorrections.add(i);
+                }
             }
 
-            await this.app.vault.modify(this.currentFile, content);
+            await this.app.vault.modify(this.currentFile, lines.join('\n'));
             this.refresh();
             new Notice('All corrections applied successfully');
         } catch (error) {
@@ -635,25 +651,32 @@ export class SidebarView extends ItemView {
         this.showProcessingState();
 
         try {
-            let content = await this.app.vault.read(this.currentFile);
+            const content = await this.app.vault.read(this.currentFile);
+            const lines = content.split('\n');
+            const corrections = this.spellCheckResults.corrections;
 
             // Save for undo
             this.undoHistory.push({ file: this.currentFile, content });
 
-            // Apply selected corrections using global regex (like the old working code)
             for (const index of this.selectedCorrections) {
-                const correction = this.spellCheckResults.corrections[index];
+                const c = corrections[index];
                 
                 if (this.appliedCorrections.has(index)) {
                     continue;
                 }
 
-                const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                content = content.replace(regex, correction.suggested);
-                this.appliedCorrections.add(index);
+                const lineIndex = c.line - 1;
+                if (lineIndex >= 0 && lineIndex < lines.length) {
+                    const lineContent = lines[lineIndex];
+                    const regex = new RegExp(
+                        c.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                    );
+                    lines[lineIndex] = lineContent.replace(regex, c.suggested);
+                    this.appliedCorrections.add(index);
+                }
             }
 
-            await this.app.vault.modify(this.currentFile, content);
+            await this.app.vault.modify(this.currentFile, lines.join('\n'));
             this.selectedCorrections.clear();
             this.refresh();
             new Notice('Selected corrections applied successfully');

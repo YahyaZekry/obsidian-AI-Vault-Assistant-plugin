@@ -1,4 +1,4 @@
-import { App } from 'obsidian';
+import { App, Notice } from 'obsidian';
 
 interface CacheEntry {
     value: any;
@@ -8,31 +8,51 @@ interface CacheEntry {
 
 export class CacheManager {
     private cache: Map<string, CacheEntry> = new Map();
-    private storageKey = 'ai-vault-cache';
     private app: App;
+    private cacheDir: string;
 
     constructor(app: App) {
         this.app = app;
+        this.cacheDir = app.vault.configDir + '/ai-vault-cache';
         this.loadCache();
+    }
+
+    private cachePath(): string {
+        return this.cacheDir + '/cache.json';
+    }
+
+    private async ensureDir(): Promise<void> {
+        try {
+            if (!(await this.app.vault.adapter.exists(this.cacheDir))) {
+                await this.app.vault.adapter.mkdir(this.cacheDir);
+            }
+        } catch {
+            // directory may already exist
+        }
     }
 
     private async loadCache(): Promise<void> {
         try {
-            const stored = await this.app.vault.adapter.read(this.storageKey);
+            await this.ensureDir();
+            const stored = await this.app.vault.adapter.read(this.cachePath());
             if (stored) {
                 const parsed = JSON.parse(stored);
                 this.cache = new Map(Object.entries(parsed));
             }
         } catch (error) {
-            console.error('Failed to load cache:', error);
             this.cache = new Map();
         }
     }
 
     private async saveCache(): Promise<void> {
-        const entries = Array.from(this.cache.entries());
-        const data = Object.fromEntries(entries);
-        await this.app.vault.adapter.write(this.storageKey, JSON.stringify(data));
+        try {
+            await this.ensureDir();
+            const entries = Array.from(this.cache.entries());
+            const data = Object.fromEntries(entries);
+            await this.app.vault.adapter.write(this.cachePath(), JSON.stringify(data));
+        } catch (error) {
+            console.error('Failed to save cache:', error);
+        }
     }
 
     async get(key: string, ttl: number): Promise<any> {

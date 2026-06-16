@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE — AI Vault Assistant
 
 > Last updated: 2026-06-16
-> Status: Active — rebrand from "Perplexity Vault Assistant" completed; provider abstraction is next goal
+> Status: Active — Phase 1 (stability fixes) complete; provider abstraction is next goal
 
 ---
 
@@ -36,7 +36,7 @@ An Obsidian plugin that uses AI APIs (currently Perplexity, planned: OpenAI, Ant
 │   │   └── SafeFileWriter.ts           — File conflict detection modal (⚠️ UNUSED)
 │   ├── services/
 │   │   ├── AIService.ts                — API calls: spell check, corrections, enhancement
-│   │   ├── CacheManager.ts             — Disk-backed kv cache (writes to vault root: BUG)
+│   │   ├── CacheManager.ts             — Disk-backed kv cache (stored under .obsidian/)
 │   │   ├── FileFilter.ts               — Extension-based file exclusion
 │   │   ├── SpellCheckStrategy.ts       — Strategy pattern: Full / Incremental / Auto
 │   │   └── VaultAnalyzer.ts            — Vault analysis + smart link comparison
@@ -70,7 +70,7 @@ An Obsidian plugin that uses AI APIs (currently Perplexity, planned: OpenAI, Ant
 
 Key files:
 - `src/AIVaultAssistantPlugin.ts:14` — Main plugin class, loads services, registers commands + ribbon icons
-- `src/services/AIService.ts:52` — All API communication (5 hardcoded fetch calls via Perplexity)
+- `src/services/AIService.ts:52` — All API communication (uses Obsidian requestUrl, HTTP error handling added, silent revert thresholds removed)
 - `src/services/VaultAnalyzer.ts:6` — Vault analysis + file comparison for smart links
 - `src/services/SpellCheckStrategy.ts:284` — Strategy factory for Full/Incremental/Auto modes
 - `src/ui/SidebarView.ts:7` — Heaviest file (843 lines): sidebar rendering + correction management
@@ -83,7 +83,7 @@ Key files:
 |--------------------------------|------|---------------------------------------------------|
 | `ai-spell-check`               | —    | Opens main modal with 4 spell check options       |
 | `ai-vault-analysis`            | —    | Analyzes all markdown files for themes             |
-| `ai-smart-links`               | —    | Generates semantic link suggestions (broken — deprecated model) |
+| `ai-smart-links`               | —    | Generates semantic link suggestions (uses settings' linkAnalysisModel — was `sonar-medium-online`) |
 | `ai-open-sidebar`              | —    | Opens docked sidebar with correction UI            |
 | `Brain` ribbon icon            | —    | Opens main modal (quick access)                    |
 | `Sidebar` ribbon icon          | —    | Opens sidebar view                                 |
@@ -94,7 +94,7 @@ Key files:
 | Name                            | File                              | What It Manages / Returns                        |
 |---------------------------------|-----------------------------------|---------------------------------------------------|
 | `AIService`                     | `services/AIService.ts`           | Spell check, apply corrections, enhance via API   |
-| `CacheManager`                  | `services/CacheManager.ts`        | In-memory Map + JSON file in vault root           |
+| `CacheManager`                  | `services/CacheManager.ts`        | In-memory Map + JSON file under `.obsidian/ai-vault-cache/` |
 | `VaultAnalyzer`                 | `services/VaultAnalyzer.ts`       | Vault theme analysis + smart link generation      |
 | `FileFilter`                    | `services/FileFilter.ts`          | Extension-based include/exclude filtering         |
 | `SpellCheckStrategyFactory`     | `services/SpellCheckStrategy.ts`  | Creates Full/Incremental/Auto strategy instances  |
@@ -198,13 +198,13 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 
 ### Improvement Plan (from OPUSPLAN)
 
-**Phase 1: Stability & Critical Fixes**
-1. Fix global-regex text replacement — apply at specific line, not global
-2. Move cache out of vault root — use plugin data file
-3. Fix deprecated model in `compareFiles` — use settings' `linkAnalysisModel`
-4. Replace `fetch` with Obsidian's `requestUrl`
-5. Add HTTP error handling — wire up `ErrorHandler`
-6. Remove silent-revert thresholds
+**Phase 1: Stability & Critical Fixes** ✅ COMPLETE
+1. ✅ Fix global-regex text replacement — apply at specific line, not global
+2. ✅ Move cache out of vault root — use plugin data file under `.obsidian/`
+3. ✅ Fix deprecated model in `compareFiles` — use settings' `linkAnalysisModel`
+4. ✅ Replace `fetch` with Obsidian's `requestUrl`
+5. ✅ Add HTTP error handling — check `response.status !== 200` at all 5 call sites
+6. ✅ Remove silent-revert thresholds — `< 50` char guard and `starts with #` guard removed
 
 **Phase 2: Provider Refactor** (current goal)
 7. Introduce `AIProvider` interface — `src/providers/` folder
@@ -240,13 +240,13 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 
 ## Known Issues / TODOs
 - [x] ~~Remove "Perplexity" branding everywhere~~ — rename plugin, class, services, commands, settings, UI text
-- [ ] **CRITICAL: Global regex replacement corrupts data** — fix before shipping any release
-- [ ] **Cache pollutes vault root** — move to plugin data file
-- [ ] **Smart Links broken** — deprecated model, fix when creating provider abstraction
-- [ ] **No HTTP error handling** — API crashes silently
-- [ ] **Uses `fetch()` not `requestUrl()`** — no mobile support
+- [x] ~~**CRITICAL: Global regex replacement corrupts data** — now line-specific~~
+- [x] ~~**Cache pollutes vault root** — now stores under `.obsidian/ai-vault-cache/`~~
+- [x] ~~**Smart Links broken** — now uses `settings.linkAnalysisModel`~~
+- [x] ~~**No HTTP error handling** — `response.status !== 200` checks at all call sites~~
+- [x] ~~**Uses `fetch()` not `requestUrl()`** — now uses Obsidian `requestUrl` at all 5 sites~~
 - [ ] **Dead code** — wire up SafeFileWriter, ErrorHandler, KeyboardManager, ToastManager
-- [ ] **Silent revert thresholds** — remove them
+- [x] ~~**Silent revert thresholds** — removed~~
 - [ ] **Duplicate settings interface in AIService.ts** — remove inline interface, import from types
 - [ ] **Debug console.logs** — clean up before release
 - [ ] **`!important` CSS** — refactor selectors
@@ -275,3 +275,4 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 | 2026-06-16 | Merged OPUSPLAN.md audit into PROJECT_KNOWLEDGE.md; flagged rebrand goal |
 | 2026-06-16 | Completed full rebrand: Perplexity Plugin → AI Vault Assistant. Updated all TS files, CSS, config, documentation |
 | 2026-06-16 | Updated repo URL to github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin
+| 2026-06-16 | Phase 1 complete: global-regex → line-specific (SidebarView.ts, SpellCheckResultsModal.ts), cache moved to .obsidian/, fetch → requestUrl at 5 sites, HTTP error handling added, silent-revert thresholds removed, deprecated model replaced with settings config |

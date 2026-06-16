@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile, requestUrl } from 'obsidian';
 import { VaultAnalysisResult, SmartLinkSuggestion, AIVaultAssistantSettings } from '../types';
 import { CacheManager } from './CacheManager';
 import { FileFilter } from './FileFilter';
@@ -69,7 +69,8 @@ export class VaultAnalyzer {
         const cacheKey = `analysis:${this.simpleHash(fileContents)}`;
 
         try {
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            const response = await requestUrl({
+                url: 'https://api.perplexity.ai/chat/completions',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,15 +82,15 @@ export class VaultAnalyzer {
                         {
                             role: 'system',
                             content: `Analyze these markdown file names and identify the main themes and topics present. Return ONLY a JSON array of theme strings.
-
+ 
 Example output: ["Machine Learning", "Neural Networks", "Data Science"]
-
+ 
 Focus on identifying:
 - Subject areas and domains
 - Technologies and frameworks
 - Concepts and methodologies
 - Content types (tutorial, reference, notes)
-
+ 
 Return ONLY the JSON array, no explanations.`
                         },
                         {
@@ -101,8 +102,13 @@ Return ONLY the JSON array, no explanations.`
                     temperature: 0.3
                 })
             });
+ 
+            if (response.status !== 200) {
+                console.error('Vault analysis API error:', response.status, response.text);
+                return [];
+            }
 
-            const data = await response.json();
+            const data = response.json;
             let apiContent = data.choices[0].message.content;
             
             apiContent = apiContent.replace(/```[\s\S]*?```/g, '');
@@ -194,14 +200,15 @@ Return ONLY the JSON array, no explanations.`
             const contentA = await this.app.vault.read(fileA);
             const contentB = await this.app.vault.read(fileB);
             
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            const response = await requestUrl({
+                url: 'https://api.perplexity.ai/chat/completions',
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.getApiKey()}`
                 },
                 body: JSON.stringify({
-                    model: 'sonar-medium-online',
+                    model: this.settings.linkAnalysisModel || 'sonar-pro',
                     messages: [
                         {
                             role: 'system',
@@ -240,7 +247,12 @@ ${contentB.substring(0, 3000)}`
                 })
             });
 
-            const data = await response.json();
+            if (response.status !== 200) {
+                console.error('Compare files API error:', response.status, response.text);
+                return null;
+            }
+
+            const data = response.json;
             let content = data.choices[0].message.content;
             
             content = content.replace(/```[\s\S]*?```/g, '');

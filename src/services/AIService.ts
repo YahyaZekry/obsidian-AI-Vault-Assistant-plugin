@@ -1,4 +1,5 @@
 import { CacheManager } from './CacheManager';
+import { requestUrl } from 'obsidian';
 
 interface SpellCheckResult {
     corrections: Array<{
@@ -194,7 +195,8 @@ META_PROMPT2: Prioritize precision over recall—better to miss an error than fl
 - Never explain, apologize, or add markdown code blocks around the JSON`;
         }
 
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        const response = await requestUrl({
+            url: 'https://api.perplexity.ai/chat/completions',
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.settings.apiKey}`,
@@ -217,7 +219,12 @@ META_PROMPT2: Prioritize precision over recall—better to miss an error than fl
             })
         });
 
-        const data = await response.json();
+        if (response.status !== 200) {
+            console.error('Spell check API error:', response.status, response.text);
+            return { corrections: [], formattingIssues: [] };
+        }
+
+        const data = response.json;
         let responseContent = data.choices[0].message.content;
         
         responseContent = responseContent.replace(/[\s\S]*?<\/think>/g, '');
@@ -349,7 +356,8 @@ ${content}`
         ];
 
         try {
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            const response = await requestUrl({
+                url: 'https://api.perplexity.ai/chat/completions',
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.settings.apiKey}`,
@@ -363,14 +371,19 @@ ${content}`
                 })
             });
 
-            const data = await response.json();
+            if (response.status !== 200) {
+                console.error('Section correction API error:', response.status, response.text);
+                return content;
+            }
+
+            const data = response.json;
             let corrected = data.choices[0].message.content.trim();
             
             corrected = corrected.replace(/[\s\S]*?<\/think>/g, '');
             corrected = corrected.replace(/```[\s\S]*?```/g, '');
             corrected = corrected.trim();
 
-            return corrected.length > 50 ? corrected : content;
+            return corrected;
         } catch (error) {
             console.error('Section correction error:', error);
             return content;
@@ -390,7 +403,8 @@ ${content}`
         ];
 
         try {
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            const response = await requestUrl({
+                url: 'https://api.perplexity.ai/chat/completions',
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.settings.apiKey}`,
@@ -404,11 +418,16 @@ ${content}`
                 })
             });
 
-            const data = await response.json();
+            if (response.status !== 200) {
+                console.error('Enhance section API error:', response.status, response.text);
+                return content;
+            }
+
+            const data = response.json;
             let enhanced = data.choices[0].message.content.trim();
             enhanced = enhanced.replace(/[\s\S]*?<\/think>/g, '');
             enhanced = enhanced.replace(/```[\s\S]*?```/g, '');
-            return enhanced.startsWith('#') ? enhanced : content;
+            return enhanced;
         } catch {
             return content;
         }

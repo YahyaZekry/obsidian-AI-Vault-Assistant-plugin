@@ -78,8 +78,8 @@ export class SpellCheckResultsModal extends Modal {
                     contextText.textContent = context;
                 }
 
-                const applyBtn = div.createEl('button', { text: '✓ Apply This' });
-                applyBtn.onclick = () => this.applySingle(correction.original, correction.suggested, div);
+            const applyBtn = div.createEl('button', { text: '✓ Apply This' });
+                    applyBtn.onclick = () => this.applySingle(correction.original, correction.suggested, correction.line, div);
             });
 
             const applyAllBtn = contentEl.createEl('button', { 
@@ -137,7 +137,7 @@ export class SpellCheckResultsModal extends Modal {
 
                 if (issue.fixable && issue.originalText && issue.suggestedText) {
                     const fixBtn = div.createEl('button', { text: '🔧 Fix This' });
-                    fixBtn.onclick = () => this.applySingle(issue.originalText, issue.suggestedText, div);
+                    fixBtn.onclick = () => this.applySingle(issue.originalText, issue.suggestedText, issue.line, div);
                 }
             });
 
@@ -156,13 +156,18 @@ export class SpellCheckResultsModal extends Modal {
         }
     }
 
-    private async applySingle(original: string, suggested: string, div: HTMLElement) {
+    private async applySingle(original: string, suggested: string, lineNumber: number, div: HTMLElement) {
         try {
             const content = await this.app.vault.read(this.file);
-            // Replace all occurrences
-            const regex = new RegExp(original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-            const newContent = content.replace(regex, suggested);
-            await this.app.vault.modify(this.file, newContent);
+            const lines = content.split('\n');
+            const lineIndex = lineNumber - 1;
+            if (lineIndex >= 0 && lineIndex < lines.length) {
+                const regex = new RegExp(
+                    original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                );
+                lines[lineIndex] = lines[lineIndex].replace(regex, suggested);
+                await this.app.vault.modify(this.file, lines.join('\n'));
+            }
 
             div.style.opacity = '0.5';
             new Notice(`✅ Applied: ${original.substring(0, 30)}...`);
@@ -175,12 +180,18 @@ export class SpellCheckResultsModal extends Modal {
     private async applyAllCorrections() {
         const notice = new Notice('⏳ Applying all corrections...', 0);
         try {
-            let content = await this.app.vault.read(this.file);
+            const content = await this.app.vault.read(this.file);
+            const lines = content.split('\n');
             this.result.corrections.forEach((correction: any) => {
-                const regex = new RegExp(correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                content = content.replace(regex, correction.suggested);
+                const lineIndex = correction.line - 1;
+                if (lineIndex >= 0 && lineIndex < lines.length) {
+                    const regex = new RegExp(
+                        correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                    );
+                    lines[lineIndex] = lines[lineIndex].replace(regex, correction.suggested);
+                }
             });
-            await this.app.vault.modify(this.file, content);
+            await this.app.vault.modify(this.file, lines.join('\n'));
             notice.hide();
             new Notice(`✅ Applied ${this.result.corrections.length} corrections!`);
             this.close();
@@ -195,14 +206,20 @@ export class SpellCheckResultsModal extends Modal {
         const fixableIssues = this.result.formattingIssues.filter((i: any) => i.fixable);
         const notice = new Notice(`⏳ Applying ${fixableIssues.length} fixes...`, 0);
         try {
-            let content = await this.app.vault.read(this.file);
+            const content = await this.app.vault.read(this.file);
+            const lines = content.split('\n');
             fixableIssues.forEach((issue: any) => {
                 if (issue.originalText && issue.suggestedText) {
-                    const regex = new RegExp(issue.originalText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                    content = content.replace(regex, issue.suggestedText);
+                    const lineIndex = issue.line - 1;
+                    if (lineIndex >= 0 && lineIndex < lines.length) {
+                        const regex = new RegExp(
+                            issue.originalText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
+                        );
+                        lines[lineIndex] = lines[lineIndex].replace(regex, issue.suggestedText);
+                    }
                 }
             });
-            await this.app.vault.modify(this.file, content);
+            await this.app.vault.modify(this.file, lines.join('\n'));
             notice.hide();
             new Notice(`✅ Applied ${fixableIssues.length} formatting fixes!`);
             this.close();
