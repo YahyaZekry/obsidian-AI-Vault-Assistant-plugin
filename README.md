@@ -1,102 +1,95 @@
 # AI Vault Assistant
 
-AI-powered vault management with spell checking, text enhancement, and smart linking. Works on desktop and mobile.
+AI-powered spell checking, text enhancement, and smart linking for your Obsidian vault. Supports Arabic/RTL. Works on desktop and mobile.
 
-## Features
+## Installation
 
-- **Spell Check & Formatting** — Context-aware correction that preserves markdown syntax, code blocks, and wiki-links. Supports multi-pass detection with confidence scoring.
-- **Smart Linking** — Semantic link suggestions between notes with relevance scoring, connection type classification, and AI reasoning.
-- **Text Enhancement** — AI-powered rewrite to improve clarity, structure, and Obsidian-native formatting (callouts, headings, wiki-links).
-- **Vault Analysis** — Scans all markdown files to identify themes, topics, and content patterns.
-- **Arabic / RTL Support** — First-class Arabic spell checking, right-to-left layout, diacritic preservation.
-- **Mobile Ready** — Uses Obsidian's cross-platform `requestUrl` API. No desktop-only restrictions.
-- **Caching & Performance** — API responses cached under `.obsidian/` to reduce costs and improve speed. Batch processing for large vaults.
-- **File Filtering** — Automatically excludes binary and non-markdown files from analysis.
+1. In Obsidian, go to **Settings → Community Plugins → Browse**
+2. Search for "AI Vault Assistant"
+3. Install and enable the plugin
+4. Enter your API key in the plugin settings
+
+### Manual installation
+
+Download `main.js`, `styles.css`, and `manifest.json` from the [latest release](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/releases) and copy them to your vault's `.obsidian/plugins/ai-vault-assistant/` folder.
 
 ## Setup
 
-1. Get an API key from your AI provider (currently supports [Perplexity](https://perplexity.ai))
-2. Open Obsidian Settings → Community Plugins → AI Vault Assistant
+1. Get a [Perplexity API key](https://perplexity.ai) (more providers coming)
+2. Open **Settings → AI Vault Assistant**
 3. Enter your API key and select your language
-4. Configure file exclusions, analysis mode, and similarity threshold to taste
+4. Adjust analysis thresholds and caching to your preference
 
 ## Commands
 
-| Command                          | Description                                      |
-|----------------------------------|--------------------------------------------------|
-| `AI Vault Assistant: Main menu` | Opens hub: spell check, analyze vault, smart links, help |
-| `AI Vault Assistant: Check spelling and format` | Check current file for errors |
-| `AI Vault Assistant: Analyze vault` | Scan all markdown files for themes |
-| `AI Vault Assistant: Generate smart links` | Semantic link suggestions for current file or entire vault |
+| Command | Description |
+|---------|-------------|
+| `AI Vault Assistant: Open main menu` | Hub for all features (spell check, analyze, links, help) |
+| `AI Vault Assistant: Check spelling and format` | Check current note for errors |
+| `AI Vault Assistant: Apply corrections` | Apply all spelling fixes to current note |
+| `AI Vault Assistant: Enhance note` | AI rewrite for clarity and structure |
+| `AI Vault Assistant: Analyze vault` | Scan vault for themes and content patterns |
+| `AI Vault Assistant: Generate smart links` | Suggest semantic links between notes |
 | `AI Vault Assistant: Show help` | Built-in documentation |
 
-## Language Support
+## Features
 
-- **English** — Full spell checking and analysis
-- **Arabic** — RTL support, diacritic preservation, hamza variant tolerance, ة/ه context handling
-- Spanish, French, German — Grammar and accent checking (prompts available, language-specific optimization planned)
+- **Spell checking with context** — Detects spelling and grammar errors using AI. Multi-pass analysis with confidence scoring. Preserves Obsidian markdown (wiki-links, code blocks, math, callouts).
+- **Text enhancement** — Rewrites notes for better clarity, structure, and formatting. Automatically applies callouts, heading hierarchy, and link text improvements.
+- **Smart linking** — Compares notes semantically and suggests wiki-links with relevance scores, connection types (conceptual, sequential, complementary, reference), and AI reasoning.
+- **Vault analysis** — Scans all markdown files and identifies themes, topics, and content distribution.
+- **Arabic / RTL** — Full Arabic spell checking with diacritic preservation, hamza variant handling, and right-to-left UI.
+- **File filtering** — Automatically excludes PDFs, images, archives, and other non-markdown files from analysis.
+- **Caching** — API responses cached locally to reduce costs and improve speed.
 
-## Smart Linking
+## Settings
 
-Two modes:
+| Setting | Default | Description |
+|---------|---------|-------------|
+| API Key | — | Your Perplexity API key |
+| Language | English | Primary language for spell checking |
+| Spell Check Model | `sonar` | Model used for error detection |
+| Enhanced Rewrite Model | `sonar-reasoning-pro` | Model used for text enhancement |
+| Link Analysis Model | `sonar-pro` | Model used for smart linking |
+| Similarity Threshold | 0.5 | Minimum relevance score for link suggestions (0.3–0.9) |
+| Cache Enabled | true | Cache API responses |
+| Cache Duration | 24h | How long to keep cached results |
+| Batch Size | 10 | Files processed per batch |
+| Auto Format | true | Apply formatting fixes during spell check |
+| Excluded Extensions | pdf, docx, png, ... | File types to skip |
+| RTL Support | auto | Right-to-left text direction |
 
-- **Current File** (default) — Compares the active note against your vault for focused suggestions
-- **All Files** — Vault-wide relationship analysis (more resource-intensive)
+## Changelog
 
-Each suggestion includes relevance percentage, connection type (Conceptual / Sequential / Complementary / Reference), detailed reasoning, shared themes, and a content preview.
+### 1.2.0 (2026-06-16)
+- **Fixed: Text replacement no longer corrupts data** — corrections now apply only at the reported line instead of globally across the entire document
+- **Fixed: Smart links use configured model** — replaced deprecated `sonar-medium-online` with the model from settings
+- **Fixed: Cache no longer pollutes vault root** — moved to `.obsidian/ai-vault-cache/`
+- **Fixed: Mobile support** — replaced `fetch()` with Obsidian's `requestUrl()` for all API calls
+- **Fixed: HTTP error handling** — API errors now log properly and return safe fallbacks
+- **Fixed: Silent revert thresholds** — removed arbitrary guards that silently discarded short corrections and non-heading enhancements
+- **Renamed plugin** — from "Perplexity Vault Assistant" to "AI Vault Assistant" (provider-agnostic)
+- **Updated all command IDs** to `ai-` prefix
 
-## Configuration
+### 1.1.0 (2025-10-11)
+- Enhanced smart linking with detailed AI reasoning and connection types
+- Two analysis modes: current file and all files
+- File type exclusion settings
+- Vault analysis with file type breakdown
+- Arabic and RTL language support
 
-- **API Key** — Stored in Obsidian's encrypted settings
-- **Language** — Primary language for spell checking
-- **Spell Check Model** — Model used for correction (default: `sonar`)
-- **Enhancement Model** — Model used for rewrite (default: `sonar-reasoning-pro`)
-- **Link Analysis Model** — Model used for smart linking (default: `sonar-pro`)
-- **Similarity Threshold** — Minimum score for link suggestions (0.3–0.9)
-- **Cache Duration** — How long to cache API responses (in hours)
-- **Batch Size** — Files processed per batch during vault operations
-- **Excluded Extensions** — File types to skip in analysis
-- **Auto Format** — Automatically apply formatting fixes during spell check
+### 1.0.0 (2025-10-11)
+- Initial release
 
 ## Development
 
 ```bash
 npm install
-npm run dev    # watch mode
-npm run build  # type-check + production bundle
+npm run dev     # rebuild on file changes
+npm run build   # type-check + production bundle
 ```
 
-### Architecture
-
-The plugin uses a service-based architecture:
-- `AIService` — API communication via Obsidian `requestUrl`, error handling, caching layer
-- `SpellCheckStrategy` — Strategy pattern for Full / Incremental / Auto check modes
-- `VaultAnalyzer` — Theme analysis and file comparison for smart links
-- `CacheManager` — In-memory Map with JSON persistence under `{vault}/.obsidian/ai-vault-cache/`
-- `FileFilter` — Extension-based include/exclude filtering
-
-## Privacy & Security
-
-- API keys stored in Obsidian's encrypted plugin settings
-- Only markdown file content sent to the AI provider
-- No permanent storage on external servers
-- File filtering runs locally — binary files never transmitted
-
-## Changelog
-
-### v1.1.0 (2025-10-11)
-- Enhanced smart linking with detailed AI reasoning
-- Two analysis modes: Current File and All Files
-- File type exclusion settings with visual display
-- Connection type classification (Conceptual, Sequential, etc.)
-- Common themes identification for link suggestions
-- Preview target files before adding links
-- Vault analysis with file type breakdown
-- Arabic and RTL language support
-- Performance optimizations for large vaults
-
-### v1.0.0 (2025-10-11)
-- Initial release
+The plugin is compiled from `src/AIVaultAssistantPlugin.ts` into `main.js`. Source maps are enabled in dev mode.
 
 ## License
 
@@ -104,6 +97,6 @@ MIT
 
 ---
 
-**[☕ Support on Buy Me a Coffee](https://buymeacoffee.com/YahyaZekry)** •
-**[🐛 Report Issues](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/issues)** •
-**[💡 Request Features](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/discussions)**
+[☕ Support on Buy Me a Coffee](https://buymeacoffee.com/YahyaZekry) •
+[🐛 Report Issue](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/issues) •
+[💡 Feature Requests](https://github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin/discussions)
