@@ -81,16 +81,6 @@ Download `main.js`, `styles.css`, and `manifest.json` from the [latest release](
 ### 1.0.0 (2025-10-11)
 - Initial release
 
-## Development
-
-```bash
-npm install
-npm run dev     # rebuild on file changes
-npm run build   # type-check + production bundle
-```
-
-The plugin is compiled from `src/AIVaultAssistantPlugin.ts` into `main.js`. Source maps are enabled in dev mode.
-
 ## License
 
 MIT
