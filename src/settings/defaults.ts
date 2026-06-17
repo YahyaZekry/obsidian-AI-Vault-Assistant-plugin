@@ -4,6 +4,7 @@ export type { AIVaultAssistantSettings } from '../types';
 
 export const DEFAULT_SETTINGS: AIVaultAssistantSettings = {
     version: 2,
+    provider: 'perplexity',
     apiKey: '',
     spellCheckLanguage: 'en',
     similarityThreshold: 0.7,

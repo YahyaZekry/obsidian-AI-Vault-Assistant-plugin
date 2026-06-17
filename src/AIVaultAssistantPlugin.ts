@@ -10,12 +10,21 @@ import { SidebarView, SIDEBAR_VIEW_TYPE } from './ui/SidebarView';
 import { migrate } from './settings/migration';
 import { AIVaultAssistantSettings, SpellCheckResult, SpellCheckContext, SpellCheckMode } from './types/index';
 import { DEFAULT_SETTINGS } from './settings/defaults';
+import { createProvider } from './providers/ProviderFactory';
+import { AIProvider } from './providers/AIProvider';
+import { KeyboardManager } from './ui/KeyboardManager';
+import { themeManager } from './ui/ThemeManager';
+import { SafeFileWriter } from './core/SafeFileWriter';
+import { simpleHash } from './utils/hash';
 
 export class AIVaultAssistantPlugin extends Plugin {
     settings: AIVaultAssistantSettings;
     cacheManager: CacheManager;
     vaultAnalyzer: VaultAnalyzer;
     aiService: AIService;
+    provider: AIProvider;
+    keyboardManager: KeyboardManager;
+    fileWriter: SafeFileWriter;
 
     async onload() {
         console.log('AI Vault Assistant Plugin loading...');
@@ -25,8 +34,23 @@ export class AIVaultAssistantPlugin extends Plugin {
         this.addSettingTab(new AIVaultAssistantSettingTab(this.app, this));
 
         this.cacheManager = new CacheManager(this.app);
-        this.vaultAnalyzer = new VaultAnalyzer(this.app, this.cacheManager, this.settings);
-        this.aiService = new AIService(this.cacheManager, this.settings);
+        this.provider = createProvider(this.settings.provider, this.settings.apiKey);
+        this.fileWriter = new SafeFileWriter(this.app);
+        this.vaultAnalyzer = new VaultAnalyzer(this.app, this.cacheManager, this.provider, this.settings);
+        this.aiService = new AIService(this.cacheManager, this.provider, this.settings);
+        this.keyboardManager = new KeyboardManager(this);
+        this.keyboardManager.registerShortcut({
+            key: 'm',
+            modifiers: ['Mod', 'Shift'],
+            description: 'Open AI Vault Assistant main menu',
+            action: () => new AIVaultAssistantMainModal(this.app, this).open()
+        });
+        this.keyboardManager.registerShortcut({
+            key: 's',
+            modifiers: ['Mod', 'Shift'],
+            description: 'Open AI Vault sidebar',
+            action: () => this.activateSidebarView()
+        });
 
         // Register sidebar view
         this.registerView(SIDEBAR_VIEW_TYPE, (leaf) => new SidebarView(leaf, this));
@@ -133,13 +157,13 @@ export class AIVaultAssistantPlugin extends Plugin {
     }
 
     simpleHash(str: string): string {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return Math.abs(hash).toString(36);
+        return simpleHash(str);
+    }
+
+    recreateProvider() {
+        this.provider = createProvider(this.settings.provider, this.settings.apiKey);
+        this.vaultAnalyzer.provider = this.provider;
+        this.aiService.provider = this.provider;
     }
 
     activateSidebarView() {

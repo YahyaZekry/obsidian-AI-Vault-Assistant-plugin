@@ -1,7 +1,10 @@
-import { App, TFile, requestUrl } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { VaultAnalysisResult, SmartLinkSuggestion, AIVaultAssistantSettings } from '../types';
 import { CacheManager } from './CacheManager';
 import { FileFilter } from './FileFilter';
+import { AIProvider } from '../providers/AIProvider';
+import { simpleHash } from '../utils/hash';
+import { errorHandler } from '../core/ErrorHandler';
 
 export class VaultAnalyzer {
     private fileFilter: FileFilter;
@@ -9,6 +12,7 @@ export class VaultAnalyzer {
     constructor(
         private app: App,
         private cacheManager: CacheManager,
+        public provider: AIProvider,
         private settings: AIVaultAssistantSettings
     ) {
         this.fileFilter = new FileFilter(settings);
@@ -69,14 +73,8 @@ export class VaultAnalyzer {
         const cacheKey = `analysis:${this.simpleHash(fileContents)}`;
 
         try {
-            const response = await requestUrl({
-                url: 'https://api.perplexity.ai/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getApiKey()}`
-                },
-                body: JSON.stringify({
+            const result = await errorHandler.withRetry(
+                () => this.provider.chatCompletion({
                     model: 'sonar',
                     messages: [
                         {
@@ -98,18 +96,13 @@ Return ONLY the JSON array, no explanations.`
                             content: `Analyze these files and identify themes:\n${fileContents}`
                         }
                     ],
-                    max_tokens: 1000,
+                    maxTokens: 1000,
                     temperature: 0.3
-                })
-            });
+                }),
+                3, 1000, 'analyzeChunkWithAPI'
+            );
  
-            if (response.status !== 200) {
-                console.error('Vault analysis API error:', response.status, response.text);
-                return [];
-            }
-
-            const data = response.json;
-            let apiContent = data.choices[0].message.content;
+            let apiContent = result.content;
             
             apiContent = apiContent.replace(/```[\s\S]*?```/g, '');
             
@@ -125,7 +118,7 @@ Return ONLY the JSON array, no explanations.`
 
             return [];
         } catch (error) {
-            console.error('Vault analysis API error:', error);
+            errorHandler.handle(error, 'analyzeChunkWithAPI');
             return [];
         }
     }
@@ -141,19 +134,9 @@ Return ONLY the JSON array, no explanations.`
     }
 
     private simpleHash(str: string): string {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return Math.abs(hash).toString(36);
+        return simpleHash(str);
     }
 
-    private getApiKey(): string {
-        const plugin = (this.app as any).plugins.plugins['ai-vault-assistant'];
-        return plugin?.settings?.apiKey || '';
-    }
 
     async generateSmartLinks(mode: 'current' | 'all'): Promise<SmartLinkSuggestion[]> {
         const activeFile = this.app.workspace.getActiveFile();
@@ -200,14 +183,8 @@ Return ONLY the JSON array, no explanations.`
             const contentA = await this.app.vault.read(fileA);
             const contentB = await this.app.vault.read(fileB);
             
-            const response = await requestUrl({
-                url: 'https://api.perplexity.ai/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getApiKey()}`
-                },
-                body: JSON.stringify({
+            const result = await errorHandler.withRetry(
+                () => this.provider.chatCompletion({
                     model: this.settings.linkAnalysisModel || 'sonar-pro',
                     messages: [
                         {
@@ -242,18 +219,13 @@ File B (${fileB.basename}):
 ${contentB.substring(0, 3000)}`
                         }
                     ],
-                    max_tokens: 1500,
+                    maxTokens: 1500,
                     temperature: 0.2
-                })
-            });
+                }),
+                3, 1000, 'compareFiles'
+            );
 
-            if (response.status !== 200) {
-                console.error('Compare files API error:', response.status, response.text);
-                return null;
-            }
-
-            const data = response.json;
-            let content = data.choices[0].message.content;
+            let content = result.content;
             
             content = content.replace(/```[\s\S]*?```/g, '');
             content = content.replace(/[\s\S]*?<\/think>/g, '');
@@ -277,7 +249,7 @@ ${contentB.substring(0, 3000)}`
 
             return null;
         } catch (error) {
-            console.error(`Failed to compare ${fileA.basename} with ${fileB.basename}:`, error);
+            errorHandler.handle(error, `compareFiles ${fileA.basename} vs ${fileB.basename}`);
             return null;
         }
     }

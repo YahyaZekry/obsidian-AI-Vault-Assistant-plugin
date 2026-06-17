@@ -43,6 +43,7 @@ export interface AIService {
 
 export interface AIVaultAssistantSettings {
     version: number;
+    provider: string;
     apiKey: string;
     spellCheckLanguage: string;
     similarityThreshold: number;

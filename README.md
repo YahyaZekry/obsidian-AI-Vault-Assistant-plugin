@@ -59,27 +59,15 @@ Download `main.js`, `styles.css`, and `manifest.json` from the [latest release](
 | Excluded Extensions | pdf, docx, png, ... | File types to skip |
 | RTL Support | auto | Right-to-left text direction |
 
-## Changelog
+## Development
 
-### 1.2.0 (2026-06-16)
-- **Fixed: Text replacement no longer corrupts data** — corrections now apply only at the reported line instead of globally across the entire document
-- **Fixed: Smart links use configured model** — replaced deprecated `sonar-medium-online` with the model from settings
-- **Fixed: Cache no longer pollutes vault root** — moved to `.obsidian/ai-vault-cache/`
-- **Fixed: Mobile support** — replaced `fetch()` with Obsidian's `requestUrl()` for all API calls
-- **Fixed: HTTP error handling** — API errors now log properly and return safe fallbacks
-- **Fixed: Silent revert thresholds** — removed arbitrary guards that silently discarded short corrections and non-heading enhancements
-- **Renamed plugin** — from "Perplexity Vault Assistant" to "AI Vault Assistant" (provider-agnostic)
-- **Updated all command IDs** to `ai-` prefix
+```bash
+npm install
+npm run dev     # rebuild on file changes
+npm run build   # type-check + production bundle
+```
 
-### 1.1.0 (2025-10-11)
-- Enhanced smart linking with detailed AI reasoning and connection types
-- Two analysis modes: current file and all files
-- File type exclusion settings
-- Vault analysis with file type breakdown
-- Arabic and RTL language support
-
-### 1.0.0 (2025-10-11)
-- Initial release
+The plugin is compiled from `src/AIVaultAssistantPlugin.ts` into `main.js`. Source maps are enabled in dev mode.
 
 ## License
 

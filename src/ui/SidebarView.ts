@@ -575,7 +575,7 @@ export class SidebarView extends ItemView {
                     correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
                 );
                 lines[lineIndex] = lineContent.replace(regex, correction.suggested);
-                await this.app.vault.modify(this.currentFile, lines.join('\n'));
+                await this.plugin.fileWriter.writeWithConflictCheck(this.currentFile, content, lines.join('\n'));
 
                 this.appliedCorrections.add(index);
                 this.selectedCorrections.delete(index);
@@ -626,7 +626,7 @@ export class SidebarView extends ItemView {
                 }
             }
 
-            await this.app.vault.modify(this.currentFile, lines.join('\n'));
+            await this.plugin.fileWriter.writeWithConflictCheck(this.currentFile, content, lines.join('\n'));
             this.refresh();
             new Notice('All corrections applied successfully');
         } catch (error) {
@@ -676,7 +676,7 @@ export class SidebarView extends ItemView {
                 }
             }
 
-            await this.app.vault.modify(this.currentFile, lines.join('\n'));
+            await this.plugin.fileWriter.writeWithConflictCheck(this.currentFile, content, lines.join('\n'));
             this.selectedCorrections.clear();
             this.refresh();
             new Notice('Selected corrections applied successfully');
@@ -847,7 +847,7 @@ export class SidebarView extends ItemView {
                 }
             }
 
-            await this.app.vault.modify(this.currentFile, content);
+            await this.plugin.fileWriter.writeWithConflictCheck(this.currentFile, content, content);
 
             // Remove all fixable issues from the list
             this.spellCheckResults.formattingIssues = this.spellCheckResults.formattingIssues.filter(

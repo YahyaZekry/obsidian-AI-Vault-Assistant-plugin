@@ -1,5 +1,7 @@
 import { CacheManager } from './CacheManager';
-import { requestUrl } from 'obsidian';
+import { AIProvider, ChatCompletionMessage } from '../providers/AIProvider';
+import { errorHandler } from '../core/ErrorHandler';
+import { simpleHash } from '../utils/hash';
 
 interface SpellCheckResult {
     corrections: Array<{
@@ -53,17 +55,12 @@ interface AIVaultAssistantSettings {
 export class AIService {
     constructor(
         private cacheManager: CacheManager,
+        public provider: AIProvider,
         private settings: AIVaultAssistantSettings
     ) {}
 
     private simpleHash(str: string): string {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return Math.abs(hash).toString(36);
+        return simpleHash(str);
     }
 
     async checkSpellingAndFormat(content: string, language: string): Promise<SpellCheckResult> {
@@ -195,62 +192,56 @@ META_PROMPT2: Prioritize precision over recall—better to miss an error than fl
 - Never explain, apologize, or add markdown code blocks around the JSON`;
         }
 
-        const response = await requestUrl({
-            url: 'https://api.perplexity.ai/chat/completions',
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.settings.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: this.settings.spellCheckModel || 'sonar',
-                messages: [
-                    {
-                        role: 'system',
-                        content: systemPrompt
-                    },
-                    {
-                        role: 'user',
-                        content: `Check: ${content.substring(0, 5000)}`
-                    }
-                ],
-                max_tokens: 4000,
-                temperature: 0.1
-            })
-        });
+        try {
+            const result = await errorHandler.withRetry(
+                () => this.provider.chatCompletion({
+                    model: this.settings.spellCheckModel || 'sonar',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: systemPrompt
+                        },
+                        {
+                            role: 'user',
+                            content: `Check: ${content.substring(0, 5000)}`
+                        }
+                    ],
+                    maxTokens: 4000,
+                    temperature: 0.1
+                }),
+                3, 1000, 'checkSpellingAndFormat'
+            );
 
-        if (response.status !== 200) {
-            console.error('Spell check API error:', response.status, response.text);
+            let responseContent = result.content;
+        
+            responseContent = responseContent.replace(/[\s\S]*?<\/think>/g, '');
+            const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) responseContent = jsonMatch[0];
+
+            const parsed = JSON.parse(responseContent);
+
+            // Add fallback context if not provided
+            const resultObj: SpellCheckResult = {
+                corrections: (parsed.corrections || []).map((c: any) => ({
+                    ...c,
+                    context: c.context || 'No context available'
+                })).filter((c: any) => c.original && c.suggested),
+                formattingIssues: (parsed.formattingIssues || []).map((i: any) => ({
+                    ...i,
+                    originalText: i.originalText || 'No original text available',
+                    suggestedText: i.suggestedText || 'No suggested text available'
+                })).filter((i: any) => i.issue)
+            };
+
+            if (this.settings.cacheEnabled) {
+                await this.cacheManager.set(cacheKey, resultObj, this.settings.cacheDuration);
+            }
+
+            return resultObj;
+        } catch (error) {
+            console.error('Spell check API error:', error);
             return { corrections: [], formattingIssues: [] };
         }
-
-        const data = response.json;
-        let responseContent = data.choices[0].message.content;
-        
-        responseContent = responseContent.replace(/[\s\S]*?<\/think>/g, '');
-        const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) responseContent = jsonMatch[0];
-
-        const parsed = JSON.parse(responseContent);
-
-        // Add fallback context if not provided
-        const result: SpellCheckResult = {
-            corrections: (parsed.corrections || []).map((c: any) => ({
-                ...c,
-                context: c.context || 'No context available'
-            })).filter((c: any) => c.original && c.suggested),
-            formattingIssues: (parsed.formattingIssues || []).map((i: any) => ({
-                ...i,
-                originalText: i.originalText || 'No original text available',
-                suggestedText: i.suggestedText || 'No suggested text available'
-            })).filter((i: any) => i.issue)
-        };
-
-        if (this.settings.cacheEnabled) {
-            await this.cacheManager.set(cacheKey, result, this.settings.cacheDuration);
-        }
-
-        return result;
     }
     
     async applyCorrectionsWithChunks(content: string, language: string): Promise<string> {
@@ -302,7 +293,7 @@ META_PROMPT2: Prioritize precision over recall—better to miss an error than fl
     }
 
     async applySectionCorrections(content: string, language: string): Promise<string> {
-        const messages = [
+        const messages: ChatCompletionMessage[] = [
             {
                 role: 'system',
                 content: `You are a precise text correction engine for ${language}. Apply spelling and grammar fixes while preserving ALL Obsidian markdown syntax and document structure.
@@ -356,28 +347,17 @@ ${content}`
         ];
 
         try {
-            const response = await requestUrl({
-                url: 'https://api.perplexity.ai/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.settings.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
+            const result = await errorHandler.withRetry(
+                () => this.provider.chatCompletion({
                     model: this.settings.spellCheckModel || 'sonar',
                     messages,
-                    max_tokens: 6000,
+                    maxTokens: 6000,
                     temperature: 0.1
-                })
-            });
+                }),
+                3, 1000, 'applySectionCorrections'
+            );
 
-            if (response.status !== 200) {
-                console.error('Section correction API error:', response.status, response.text);
-                return content;
-            }
-
-            const data = response.json;
-            let corrected = data.choices[0].message.content.trim();
+            let corrected = result.content.trim();
             
             corrected = corrected.replace(/[\s\S]*?<\/think>/g, '');
             corrected = corrected.replace(/```[\s\S]*?```/g, '');
@@ -391,7 +371,7 @@ ${content}`
     }
 
     async enhanceSection(content: string, language: string): Promise<string> {
-        const messages = [
+        const messages: ChatCompletionMessage[] = [
             {
                 role: 'system',
                 content: "You are an expert Obsidian markdown editor and content strategist for " + language + ". Enhance the provided markdown file to improve clarity, structure, and Obsidian-native functionality while preserving the core meaning and intent.\n\n**ENHANCEMENT SCOPE:**\n\n**Content Improvements:**\n- Strengthen weak or vague phrasing with precise language\n- Fix logical flow between sections and paragraphs\n- Remove redundancies and filler words\n- Convert passive voice to active where it improves clarity\n- Break up overly long sentences and dense paragraphs\n- Add transitional phrases between disconnected ideas\n\n**Obsidian Structure Optimization:**\n- Improve heading hierarchy (H1→H2→H3) for logical nesting\n- Convert plain lists to proper Obsidian callouts where semantically appropriate:\n  - Use > [!NOTE] for important context\n  - Use > [!TIP] for actionable advice\n  - Use > [!WARNING] for critical caveats\n  - Use > [!EXAMPLE] for illustrative cases\n- Enhance wiki-links: [[Page]] → [[Page|Natural Link Text]] when context helps\n- Suggest relevant but currently unlinked concepts as [[Potential Links]]\n- Convert inline URLs to markdown links: [descriptive text](URL)\n- Format frontmatter cleanly (YAML style) with consistent indentation\n\n**Formatting Polish:**\n- Standardize bullet styles (- vs *) within documents\n- Ensure consistent spacing before/after headings and lists\n- Fix table alignment and column widths\n- Apply proper code block language identifiers (```python, ```javascript)\n- Clean up excessive blank lines (max 1 between paragraphs)\n\n**NON-NEGOTIABLE PRESERVATION:**\n- Do NOT change factual claims or data\n- Do NOT alter code logic inside code blocks\n- Do NOT remove existing [[wiki-links]] (improve their display text only)\n- Do NOT change the original author's voice/tone dramatically\n- Do NOT add external information not implied by the original text\n- For Arabic: Maintain original diacritics if present; don't add/remove diacritics if absent\n- Preserve the original document length within ~15%\n\n**OUTPUT FORMAT:**\n- Return the enhanced content directly (raw markdown, no JSON wrapper)\n- NO explanations, NO meta-commentary, NO \"Here's the enhanced version:\"\n- NO code fences around the output\n- Preserve all original [[wiki-links]], ![[embeds]], frontmatter, and code blocks unchanged"
@@ -403,32 +383,22 @@ ${content}`
         ];
 
         try {
-            const response = await requestUrl({
-                url: 'https://api.perplexity.ai/chat/completions',
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.settings.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
+            const result = await errorHandler.withRetry(
+                () => this.provider.chatCompletion({
                     model: this.settings.enhancedRewriteModel || 'sonar-reasoning-pro',
                     messages,
-                    max_tokens: 6000,
+                    maxTokens: 6000,
                     temperature: 0.1
-                })
-            });
+                }),
+                3, 1000, 'enhanceSection'
+            );
 
-            if (response.status !== 200) {
-                console.error('Enhance section API error:', response.status, response.text);
-                return content;
-            }
-
-            const data = response.json;
-            let enhanced = data.choices[0].message.content.trim();
+            let enhanced = result.content.trim();
             enhanced = enhanced.replace(/[\s\S]*?<\/think>/g, '');
             enhanced = enhanced.replace(/```[\s\S]*?```/g, '');
             return enhanced;
-        } catch {
+        } catch (error) {
+            errorHandler.handle(error, 'enhanceSection');
             return content;
         }
     }

@@ -112,9 +112,9 @@
 .ai-vault-sidebar,
 .workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content,
 .nav-folder:has(.ai-vault-sidebar) {
-    width: 100% !important;
-    min-width: 280px !important;
-    max-width: 500px !important;
+    width: 100%;
+    min-width: 280px;
+    max-width: 500px;
     height: 100%;
     padding: var(--spacing-md);
     overflow-y: auto;
@@ -124,7 +124,7 @@
     color: var(--color-slate-700);
     background-color: var(--color-slate-50);
     box-sizing: border-box;
-    margin: 0 auto !important;
+    margin: 0 auto;
 }
 
 /* Ensure the view-content wrapper doesn't override our constraints */
@@ -132,13 +132,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 !important;
+    padding: 0;
 }
 
 .workspace-leaf-content[data-type="ai-vault-assistant-view"] .ai-vault-sidebar {
     flex: 0 0 auto;
-    width: 100% !important;
-    max-width: 500px !important;
+    width: 100%;
+    max-width: 500px;
 }
 
 .sidebar-container {
@@ -584,7 +584,7 @@
 
 /* Context in RTL should allow mixed text */
 [dir="rtl"] .context-text {
-    text-align: start !important;
+    text-align: start;
     unicode-bidi: plaintext;
 }
 
@@ -810,35 +810,35 @@
 /* RTL direction is applied to .sidebar-container instead */
 .ai-vault-sidebar {
     /* Always keep LTR for scrollbar on right side */
-    direction: ltr !important;
+    direction: ltr;
 }
 
 .ai-vault-sidebar[dir="rtl"],
 .workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content[dir="rtl"],
 [dir="rtl"].ai-vault-sidebar {
     /* Keep sidebar LTR for scrollbar, text alignment handled in sidebar-container */
-    direction: ltr !important;
-    text-align: left !important;
+    direction: ltr;
+    text-align: left;
 }
 
 /* Explicit LTR styles for English content */
 .ai-vault-sidebar[dir="ltr"],
 .workspace-leaf-content[data-type="ai-vault-assistant-view"] .view-content[dir="ltr"],
 [dir="ltr"].ai-vault-sidebar {
-    direction: ltr !important;
-    text-align: left !important;
+    direction: ltr;
+    text-align: left;
 }
 
 /* Ensure RTL is applied even if set on parent container */
 .workspace-leaf-content[data-type="ai-vault-assistant-view"][dir="rtl"] .view-content,
 .workspace-leaf-content[data-type="ai-vault-assistant-view"] [dir="rtl"] {
-    direction: rtl !important;
-    text-align: right !important;
+    direction: rtl;
+    text-align: right;
 }
 
 [dir="rtl"] .sidebar-container {
-    direction: rtl !important;
-    text-align: right !important;
+    direction: rtl;
+    text-align: right;
 }
 
 [dir="rtl"] .sidebar-header {
@@ -922,7 +922,7 @@
 }
 
 [dir="rtl"] .correction-section {
-    text-align: start !important;
+    text-align: start;
     unicode-bidi: plaintext;
 }
 
@@ -941,7 +941,7 @@
 }
 
 [dir="rtl"] .correction-text {
-    text-align: start !important;
+    text-align: start;
     unicode-bidi: plaintext;
 }
 
@@ -969,7 +969,7 @@
 }
 
 [dir="rtl"] .correction-context {
-    text-align: right !important;
+    text-align: right;
     unicode-bidi: isolate;
 }
 
@@ -978,7 +978,7 @@
 }
 
 [dir="rtl"] .context-text {
-    text-align: start !important;
+    text-align: start;
     unicode-bidi: plaintext;
 }
 
@@ -1794,7 +1794,7 @@
 /* Editor highlight effect */
 .ai-vault-highlight-active .cm-selectionBackground,
 .ai-vault-highlight-active .CodeMirror-selectedtext {
-    background-color: var(--color-warning-500) !important;
+    background-color: var(--color-warning-500);
     animation: highlight-fade 3s ease-out forwards;
 }
 
@@ -2060,18 +2060,18 @@
 [dir="rtl"] .modal {
     text-align: right;
     /* Container has RTL direction, but text elements use unicode-bidi: isolate */
-    direction: rtl !important;
+    direction: rtl;
 }
 
 /* RTL text classes for modal content */
 .rtl-text {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 .rtl-content {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
@@ -2166,49 +2166,49 @@
 
 /* RTL for Spell Check Results Modal items */
 [dir="rtl"] .spell-check-item {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 [dir="rtl"] .spell-check-item h4 {
-    text-align: right !important;
+    text-align: right;
 }
 
 [dir="rtl"] .spell-check-item p {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 [dir="rtl"] .error-context {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 [dir="rtl"] .error-context strong {
-    text-align: right !important;
+    text-align: right;
 }
 
 [dir="rtl"] .error-context .context-text {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 [dir="rtl"] .formatting-item {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }
 
 [dir="rtl"] .formatting-item h4 {
-    text-align: right !important;
+    text-align: right;
 }
 
 [dir="rtl"] .formatting-item p {
-    text-align: right !important;
+    text-align: right;
     /* Don't force RTL direction - let text flow naturally based on content */
     unicode-bidi: isolate;
 }

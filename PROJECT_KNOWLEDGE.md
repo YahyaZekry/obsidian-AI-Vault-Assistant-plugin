@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE — AI Vault Assistant
 
-> Last updated: 2026-06-16
-> Status: Active — Phase 1 (stability fixes) complete; provider abstraction is next goal
+> Last updated: 2026-06-17
+> Status: Active — Phase 2 step 8 done (provider selection UI), Phase 5 items 23/26/27 done (simpleHash, CSS !important, innerHTML XSS)
 
 ---
 
@@ -29,28 +29,34 @@ An Obsidian plugin that uses AI APIs (currently Perplexity, planned: OpenAI, Ant
 ## Project Structure
 ```
 ├── src/
-│   ├── AIVaultAssistantPlugin.ts       — Plugin entrypoint, commands, ribbon icons
+│   ├── AIVaultAssistantPlugin.ts       — Plugin entrypoint, commands, ribbon icons, recreateProvider()
 │   ├── core/
-│   │   ├── ErrorHandler.ts             — Error translation + retry/backoff (⚠️ UNUSED)
+│   │   ├── ErrorHandler.ts             — Error translation + retry/backoff (✅ wired into AIService + VaultAnalyzer)
 │   │   ├── ProgressTracker.ts          — Progress bar UI with ETA + cancel
-│   │   └── SafeFileWriter.ts           — File conflict detection modal (⚠️ UNUSED)
+│   │   └── SafeFileWriter.ts           — File conflict detection modal (✅ wired into SidebarView + SpellCheckResultsModal)
+│   ├── providers/
+│   │   ├── AIProvider.ts              — AIProvider interface + chat completion types
+│   │   ├── PerplexityProvider.ts      — Perplexity implementation via requestUrl
+│   │   └── ProviderFactory.ts         — Creates provider by ID
 │   ├── services/
-│   │   ├── AIService.ts                — API calls: spell check, corrections, enhancement
+│   │   ├── AIService.ts                — Spell check, corrections, enhancement (uses AIProvider, public provider)
 │   │   ├── CacheManager.ts             — Disk-backed kv cache (stored under .obsidian/)
 │   │   ├── FileFilter.ts               — Extension-based file exclusion
 │   │   ├── SpellCheckStrategy.ts       — Strategy pattern: Full / Incremental / Auto
-│   │   └── VaultAnalyzer.ts            — Vault analysis + smart link comparison
+│   │   └── VaultAnalyzer.ts            — Vault analysis + smart link comparison (uses AIProvider, public provider)
 │   ├── settings/
 │   │   ├── defaults.ts                 — DEFAULT_SETTINGS object
 │   │   ├── migration.ts                — Versioned settings migration (v1→v2)
-│   │   └── SettingsTab.ts              — Settings UI with dropdowns, sliders, toggles
+│   │   └── SettingsTab.ts              — Settings UI with dropdowns, sliders, toggles (provider dropdown added)
 │   ├── types/
 │   │   └── index.ts                    — All interfaces (single source of truth)
+│   ├── utils/
+│   │   └── hash.ts                     — simpleHash() shared utility
 │   └── ui/
-│       ├── KeyboardManager.ts          — Keyboard shortcut registration (⚠️ UNUSED)
+│       ├── KeyboardManager.ts          — Keyboard shortcut registration (✅ Ctrl/Cmd+Shift+M/S)
 │       ├── SidebarView.ts              — Docked sidebar: corrections list, apply/undo
 │       ├── ThemeManager.ts             — Singleton theme manager
-│       ├── ToastManager.ts             — Custom toast notifications (⚠️ UNUSED)
+│       ├── ToastManager.ts             — Custom toast notifications (⚠️ skipped — Notice is standard)
 │       ├── UIUtils.ts                  — Static helpers (notices, formatting)
 │       └── modals/
 │           ├── HelpModal.ts            — Built-in documentation
@@ -70,8 +76,10 @@ An Obsidian plugin that uses AI APIs (currently Perplexity, planned: OpenAI, Ant
 
 Key files:
 - `src/AIVaultAssistantPlugin.ts:14` — Main plugin class, loads services, registers commands + ribbon icons
-- `src/services/AIService.ts:52` — All API communication (uses Obsidian requestUrl, HTTP error handling added, silent revert thresholds removed)
-- `src/services/VaultAnalyzer.ts:6` — Vault analysis + file comparison for smart links
+- `src/services/AIService.ts:52` — All API communication (uses AIProvider interface, no direct requestUrl)
+- `src/services/VaultAnalyzer.ts:6` — Vault analysis + file comparison (uses AIProvider, getApiKey removed)
+- `src/providers/AIProvider.ts:1` — AIProvider interface contract
+- `src/providers/PerplexityProvider.ts:1` — Perplexity implementation
 - `src/services/SpellCheckStrategy.ts:284` — Strategy factory for Full/Incremental/Auto modes
 - `src/ui/SidebarView.ts:7` — Heaviest file (843 lines): sidebar rendering + correction management
 - `src/types/index.ts:44` — `AIVaultAssistantSettings` with 43 fields
@@ -93,16 +101,18 @@ Key files:
 ## Services & Hooks
 | Name                            | File                              | What It Manages / Returns                        |
 |---------------------------------|-----------------------------------|---------------------------------------------------|
-| `AIService`                     | `services/AIService.ts`           | Spell check, apply corrections, enhance via API   |
+| `AIService`                     | `services/AIService.ts`           | Spell check, apply corrections, enhance via AIProvider |
 | `CacheManager`                  | `services/CacheManager.ts`        | In-memory Map + JSON file under `.obsidian/ai-vault-cache/` |
-| `VaultAnalyzer`                 | `services/VaultAnalyzer.ts`       | Vault theme analysis + smart link generation      |
+| `VaultAnalyzer`                 | `services/VaultAnalyzer.ts`       | Vault theme analysis + smart link generation (uses AIProvider) |
+| `PerplexityProvider`            | `providers/PerplexityProvider.ts` | Implements AIProvider for Perplexity API |
+| `ProviderFactory`               | `providers/ProviderFactory.ts`    | Creates provider instance by ID |
 | `FileFilter`                    | `services/FileFilter.ts`          | Extension-based include/exclude filtering         |
 | `SpellCheckStrategyFactory`     | `services/SpellCheckStrategy.ts`  | Creates Full/Incremental/Auto strategy instances  |
-| `ErrorHandler`                  | `core/ErrorHandler.ts`            | Singleton: error translation + retry (UNUSED)     |
-| `SafeFileWriter`                | `core/SafeFileWriter.ts`          | Conflict detection + modal (UNUSED)               |
-| `ToastManager`                  | `ui/ToastManager.ts`              | Singleton: toast notifications (UNUSED)           |
-| `ThemeManager`                  | `ui/ThemeManager.ts`              | Singleton: auto/dark/light theme                  |
-| `KeyboardManager`               | `ui/KeyboardManager.ts`           | Keyboard shortcut registration (UNUSED)           |
+| `ErrorHandler`                  | `core/ErrorHandler.ts`            | Singleton: error translation + retry (✅ wired into all 5 API calls) |
+| `SafeFileWriter`                | `core/SafeFileWriter.ts`          | Conflict detection + modal (✅ wired into SidebarView + SpellCheckResultsModal) |
+| `ToastManager`                  | `ui/ToastManager.ts`              | Singleton: toast notifications (⚠️ skipped — Notice API is sufficient) |
+| `ThemeManager`                  | `ui/ThemeManager.ts`              | Singleton: auto/dark/light theme (✅ wired — imported in plugin) |
+| `KeyboardManager`               | `ui/KeyboardManager.ts`           | Keyboard shortcut registration (✅ wired: Ctrl/Cmd+Shift+M/S) |
 | `ProgressTracker`               | `core/ProgressTracker.ts`         | Progress bar with ETA, cancel button              |
 
 ---
@@ -147,11 +157,11 @@ No environment variables used. API key stored via Obsidian's `loadData/saveData`
 ---
 
 ## External Integrations & Data Contracts
-**Perplexity AI** (current, being abstracted to support multiple providers)
-- API endpoint: `https://api.perplexity.ai/chat/completions`
-- Auth: `Bearer ${apiKey}`
+**Perplexity AI** (implemented via `PerplexityProvider`, ready for alternatives)
+- API endpoint: `https://api.perplexity.ai/chat/completions` (encapsulated in provider)
+- Auth: `Bearer ${apiKey}` (encapsulated in provider)
 - Models: `sonar` (spell check), `sonar-pro` (link analysis — default), `sonar-reasoning-pro` (enhanced rewrite)
-- Response format: OpenAI-compatible `data.choices[0].message.content`
+- Response format: OpenAI-compatible (parsed in provider)
 - Returns: JSON with `corrections[]` and `formattingIssues[]` arrays, or `shouldLink + relevance + connectionType + reasoning` for link comparisons
 
 ---
@@ -171,26 +181,26 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 - **Visual confidence indicator** (`SidebarView.ts:314`) — colored confidence bar is good UX
 
 ### Critical Flaws (🔴)
-1. **Global regex replacement corrupts data** — `SidebarView.ts:570/608/651` and `SpellCheckResultsModal.ts:163` replace text globally instead of at the reported line. Fixes one spelling and silently rewrites every other occurrence, including inside code blocks.
-2. **Cache pollutes vault root** — `CacheManager.ts:11` writes `ai-vault-cache` as a visible file. Must use plugin data file or `.obsidian/plugins/` path.
-3. **Smart Links broken** — `VaultAnalyzer.ts:204` uses deprecated model `sonar-medium-online`. Always returns 0 suggestions.
-4. **No HTTP error handling** — `AIService.ts:220` crashes on 401/429/500.
-5. **Uses `fetch()` not `requestUrl()`** — Breaks on mobile (CORS). `isDesktopOnly: false` is a lie.
-6. **~1,000 LOC dead code** — `SafeFileWriter`, `ErrorHandler`, `KeyboardManager`, `ToastManager` fully implemented but never instantiated.
-7. **Silent revert thresholds** — `AIService.ts:374` reverts corrections if ≤50 chars; `:412` reverts enhancement if not starting with `#`.
+1. ✅ ~~**Global regex replacement corrupts data** — fixed: line-specific~~
+2. ✅ ~~**Cache pollutes vault root** — fixed: stored under `.obsidian/`~~
+3. ✅ ~~**Smart Links broken** — fixed: uses `settings.linkAnalysisModel`~~
+4. ✅ ~~**No HTTP error handling** — fixed: `response.status !== 200` checks + ErrorHandler.withRetry~~
+5. ✅ ~~**Uses `fetch()` not `requestUrl()`** — fixed: all 5 sites use Obsidian `requestUrl`~~
+6. ✅ ~~**~1,000 LOC dead code** — ErrorHandler, SafeFileWriter, KeyboardManager, ThemeManager wired (ToastManager skipped — Notice is standard)~~
+7. ✅ ~~**Silent revert thresholds** — fixed~~
 
 ### High-Severity Issues (🟠)
-- **Provider lock-in** — 5 hardcoded `fetch('https://api.perplexity.ai/chat/completions')` calls, no provider abstraction.
-- **Deprecated model** — `sonar-medium-online` removed by Perplexity; `compareFiles` always fails.
-- **Duplicate settings interface** — `AIVaultAssistantSettings` defined twice (types/index.ts + AIService.ts:21), diverged.
-- **`innerHTML` injection** — `SpellCheckResultsModal.ts:69/125` — AI output flows into `.innerHTML`, XSS risk.
+- ✅ ~~**Provider lock-in** — abstracted behind AIProvider interface; PerplexityProvider replaces hardcoded fetch calls~~
+- ✅ ~~**Deprecated model** — replaced with `settings.linkAnalysisModel`~~
+- ✅ ~~**Duplicate settings interface** — removed inline interface from AIService.ts~~
+- ✅ ~~**`innerHTML` injection** — SpellCheckResultsModal now escapes user content (`&`/`<`/`>`) before injecting `<mark>` tags~~
 - **Substring slicing** — Content truncated to 5k chars (spell check) / 3k chars (smart links). Long docs get partial analysis.
 - **Cache race condition** — `CacheManager` fires `loadCache()` without await; concurrent `set()` calls race-write.
-- **3 identical `simpleHash` copies** — Duplicated across 4 files.
+- ✅ ~~**3 identical `simpleHash` copies** — consolidated to `src/utils/hash.ts`; all 4 call sites import from there~~
 
 ### Low-Severity (🟡)
-- **39 `any` casts** — Including plugin self-lookup by hardcoded ID string.
-- **34 `!important` CSS declarations** — Layout breaks on Obsidian theme upgrades.
+- **39 `any` casts** — Including plugin self-lookup by hardcoded ID string (getApiKey was removed, so this is now just 38).
+- ✅ ~~**34 `!important` CSS declarations** — all removed; selectors already had sufficient specificity~~
 - **17 debug console.logs** — 11 `🔍 [DEBUG]` in SidebarView alone.
 - **`setTimeout` for view orchestration** — Racy; fails on slow disks.
 - **Language mismatch** — README claims 5 languages, UI offers only English + Arabic.
@@ -206,17 +216,17 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 5. ✅ Add HTTP error handling — check `response.status !== 200` at all 5 call sites
 6. ✅ Remove silent-revert thresholds — `< 50` char guard and `starts with #` guard removed
 
-**Phase 2: Provider Refactor** (current goal)
-7. Introduce `AIProvider` interface — `src/providers/` folder
-8. Settings: provider + model selection UI
-9. Strip provider-specific parsing from prompts
-10. ✅ Rebrand complete: `AIVaultAssistantPlugin`, `AIService`, `AIVaultAssistantSettings`
+**Phase 2: Provider Refactor**
+7. ✅ Introduce `AIProvider` interface — `src/providers/` folder
+8. ✅ Settings: provider selection dropdown (added to SettingsTab.ts, wired via recreateProvider())
+9. ⬜ Strip provider-specific parsing from prompts
+10. ✅ Rebrand complete: `AIVaultAssistantPlugin`, `AIService`, `AIVaultAssistantSettings` (done in earlier session)
 
-**Phase 3: Wire Up Dead Code**
-11. Use `SafeFileWriter` everywhere corrections apply
-12. Use `ErrorHandler.withRetry` for all API calls
-13. Use `ToastManager` instead of raw `Notice`
-14. Wire `ThemeManager` and `KeyboardManager`
+**Phase 3: Wire Up Dead Code** ✅ COMPLETE
+11. ✅ Use `SafeFileWriter` everywhere corrections apply
+12. ✅ Use `ErrorHandler.withRetry` for all API calls
+13. ⬜ ~~Use `ToastManager` instead of raw `Notice`~~ (skipped — `Notice` is Obsidian-standard, ToastManager adds CSS maintenance burden without meaningful benefit)
+14. ✅ Wire `ThemeManager` and `KeyboardManager`
 
 **Phase 4: UX Polish**
 15. Diff preview before applying corrections
@@ -229,12 +239,12 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 **Phase 5: Tooling & Hardening**
 21. Jest tests for data-corruption paths
 22. ESLint + Prettier + GitHub Actions
-23. Consolidate `simpleHash` into util
-24. Remove outdated plan docs from repo
-25. Remove debug logs
-26. CSS audit: kill `!important`
-27. Replace `innerHTML` with safe DOM APIs
-28. Streaming responses
+23. ✅ Consolidate `simpleHash` into util — `src/utils/hash.ts`
+24. ⬜ Remove outdated plan docs from repo
+25. ⬜ Remove debug logs
+26. ✅ CSS audit: kill `!important` — all 34 removed
+27. ✅ Replace `innerHTML` with safe DOM APIs — context text escaped before innerHTML injection
+28. ⬜ Streaming responses
 
 ---
 
@@ -245,26 +255,30 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 - [x] ~~**Smart Links broken** — now uses `settings.linkAnalysisModel`~~
 - [x] ~~**No HTTP error handling** — `response.status !== 200` checks at all call sites~~
 - [x] ~~**Uses `fetch()` not `requestUrl()`** — now uses Obsidian `requestUrl` at all 5 sites~~
-- [ ] **Dead code** — wire up SafeFileWriter, ErrorHandler, KeyboardManager, ToastManager
-- [x] ~~**Silent revert thresholds** — removed~~
-- [ ] **Duplicate settings interface in AIService.ts** — remove inline interface, import from types
+- [x] ~~**Provider lock-in** — abstracted behind AIProvider interface~~
+- [x] ~~**Duplicate settings interface in AIService.ts** — remove inline interface, import from types~~
+- [x] ~~**Provider selection UI in settings** — add dropdown + per-provider config~~
 - [ ] **Debug console.logs** — clean up before release
-- [ ] **`!important` CSS** — refactor selectors
-- [ ] **`innerHTML` XSS risk** — use safe DOM APIs
+- [x] ~~**`!important` CSS** — refactor selectors~~
+- [x] ~~**`innerHTML` XSS risk** — use safe DOM APIs~~
 - [ ] **Language mismatch** — implement Spanish, French, German or fix README
 - [ ] **No tests** — add test coverage for text-replacement paths
 - [ ] **Cache race condition** — fix async init
-- [ ] **3x `simpleHash`** — consolidate to util
+- [x] ~~**3x `simpleHash`** — consolidate to util~~
 
 ---
 
 ## Decisions & Notes
+- **Dead code wired up** — ErrorHandler.withRetry wraps all 5 API calls for exponential backoff + error translation + user notification. SafeFileWriter protects all file writes in SidebarView and SpellCheckResultsModal with conflict detection. KeyboardManager registers Ctrl/Cmd+Shift+M (open menu) and Ctrl/Cmd+Shift+S (open sidebar). ThemeManager imported for auto-init. ToastManager intentionally skipped — Obsidian's built-in Notice API is the standard for plugins and doesn't require custom CSS.
 - **Strategy pattern for spell-check modes** — Should be replicated for AI providers (planned).
-- **Provider abstraction** is the current goal — `AIProvider` interface, `ProviderFactory`, multi-provider settings.
 - **Rebrand complete** — Plugin renamed to "AI Vault Assistant" (provider-agnostic). All `PerplexityPlugin`, `PerplexityService`, `PerplexitySettingTab`, `PerplexityMainModal` class names replaced. CSS classes prefixed `ai-vault-`. Command IDs prefixed `ai-`. View type `ai-vault-assistant-view`. Manifest ID `ai-vault-assistant`.
 - **Vault analysis uses chunked file names** — reads file names only, not content, for cost optimization.
 - **Smart links compare first 3 KB only** — cost optimization that limits quality.
 - **Content truncation at 5,000/3,000 chars** — long document analysis is inherently incomplete.
+- **Provider swap at runtime** — `recreateProvider()` on plugin replaces provider in all consumers (plugin, AIService, VaultAnalyzer). `provider` made public on both services for this purpose.
+- **simpleHash consolidated** — 4 copies (AIService, VaultAnalyzer, CacheManager, Plugin) → 1 shared function in `src/utils/hash.ts`. Private methods now delegate to the shared function.
+- **CSS !important removed** — 34 declarations eliminated. Selectors already had sufficient specificity via `[data-type="ai-vault-assistant-view"]` attribute.
+- **innerHTML XSS guarded** — user file content (context text) is HTML-escaped (`&`, `<`, `>`) before regex replacement for `<mark>` highlighting. HelpModal innerHTML left as-is — content is hardcoded strings, no user input.
 
 ---
 
@@ -275,4 +289,7 @@ Solid product vision and clean modular bones, undermined by uneven execution: ~1
 | 2026-06-16 | Merged OPUSPLAN.md audit into PROJECT_KNOWLEDGE.md; flagged rebrand goal |
 | 2026-06-16 | Completed full rebrand: Perplexity Plugin → AI Vault Assistant. Updated all TS files, CSS, config, documentation |
 | 2026-06-16 | Updated repo URL to github.com/YahyaZekry/obsidian-AI-Vault-Assistant-plugin
-| 2026-06-16 | Phase 1 complete: global-regex → line-specific (SidebarView.ts, SpellCheckResultsModal.ts), cache moved to .obsidian/, fetch → requestUrl at 5 sites, HTTP error handling added, silent-revert thresholds removed, deprecated model replaced with settings config |
+| 2026-06-16 | Phase 1 complete: global-regex → line-specific (SidebarView.ts, SpellCheckResultsModal.ts), cache moved to .obsidian/, fetch → requestUrl at 5 sites, HTTP error handling added, silent-revert thresholds removed, deprecated model replaced with settings config
+| 2026-06-16 | Phase 2 step 7: created AIProvider interface, PerplexityProvider, ProviderFactory. Refactored AIService and VaultAnalyzer to use AIProvider instead of direct requestUrl. Removed VaultAnalyzer.getApiKey() hack
+| 2026-06-16 | Phase 3: wired ErrorHandler.withRetry into all 5 API calls, SafeFileWriter into SidebarView + SpellCheckResultsModal, KeyboardManager into plugin with 2 shortcuts |
+| 2026-06-17 | Fixed innerHTML XSS in SpellCheckResultsModal (escaped user content before highlight injection). Consolidated simpleHash 4→1 in src/utils/hash.ts. Wired ThemeManager singleton. Removed 34 !important CSS declarations. Added provider selection dropdown to settings. Added recreateProvider() method. Made provider public on AIService and VaultAnalyzer |

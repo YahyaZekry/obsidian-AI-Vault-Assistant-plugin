@@ -62,7 +62,11 @@ export class SpellCheckResultsModal extends Modal {
                 const contextText = contextDiv.createEl('p', { cls: 'context-text' });
                 
                 try {
-                    const highlightedContext = context.replace(
+                    const escapedContext = context
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    const highlightedContext = escapedContext.replace(
                         new RegExp(`(${correction.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
                         '<mark class="error-highlight">$1</mark>'
                     );
@@ -118,7 +122,11 @@ export class SpellCheckResultsModal extends Modal {
                     const contextText = contextDiv.createEl('p', { cls: 'context-text' });
                     
                     try {
-                        const highlightedContext = issue.originalText.replace(
+                        const escapedContext = issue.originalText
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                        const highlightedContext = escapedContext.replace(
                             new RegExp(`(${issue.originalText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
                             '<mark class="error-highlight">$1</mark>'
                         );
@@ -166,7 +174,7 @@ export class SpellCheckResultsModal extends Modal {
                     original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ''
                 );
                 lines[lineIndex] = lines[lineIndex].replace(regex, suggested);
-                await this.app.vault.modify(this.file, lines.join('\n'));
+                await this.plugin.fileWriter.writeWithConflictCheck(this.file, content, lines.join('\n'));
             }
 
             div.style.opacity = '0.5';
@@ -191,7 +199,7 @@ export class SpellCheckResultsModal extends Modal {
                     lines[lineIndex] = lines[lineIndex].replace(regex, correction.suggested);
                 }
             });
-            await this.app.vault.modify(this.file, lines.join('\n'));
+            await this.plugin.fileWriter.writeWithConflictCheck(this.file, content, lines.join('\n'));
             notice.hide();
             new Notice(`✅ Applied ${this.result.corrections.length} corrections!`);
             this.close();
@@ -219,7 +227,7 @@ export class SpellCheckResultsModal extends Modal {
                     }
                 }
             });
-            await this.app.vault.modify(this.file, lines.join('\n'));
+            await this.plugin.fileWriter.writeWithConflictCheck(this.file, content, lines.join('\n'));
             notice.hide();
             new Notice(`✅ Applied ${fixableIssues.length} formatting fixes!`);
             this.close();

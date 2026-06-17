@@ -18,11 +18,24 @@ export class AIVaultAssistantSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('API Key')
+            .setDesc('Your AI provider API key')
             .addText(text => text
                 .setValue(this.plugin.settings.apiKey)
                 .onChange(async (value) => {
                     this.plugin.settings.apiKey = value;
                     await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('AI Provider')
+            .setDesc('Which AI provider to use for spell checking and analysis')
+            .addDropdown(dropdown => dropdown
+                .addOption('perplexity', 'Perplexity')
+                .setValue(this.plugin.settings.provider)
+                .onChange(async (value) => {
+                    this.plugin.settings.provider = value;
+                    await this.plugin.saveSettings();
+                    this.plugin.recreateProvider();
                 }));
 
         new Setting(containerEl)
