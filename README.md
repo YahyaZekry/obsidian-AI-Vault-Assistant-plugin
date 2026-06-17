@@ -2,6 +2,8 @@
 
 AI-powered spell checking, text enhancement, and smart linking for your Obsidian vault. Supports Arabic/RTL. Works on desktop and mobile.
 
+> **v1.0** — Provider abstraction complete. Perplexity API built-in; OpenAI, Anthropic, Ollama support ready for community contributions.
+
 ## Installation
 
 1. In Obsidian, go to **Settings → Community Plugins → Browse**
@@ -15,10 +17,11 @@ Download `main.js`, `styles.css`, and `manifest.json` from the [latest release](
 
 ## Setup
 
-1. Get a [Perplexity API key](https://perplexity.ai) (more providers coming)
+1. Get an API key from [Perplexity](https://perplexity.ai) — more providers supported via the provider setting
 2. Open **Settings → AI Vault Assistant**
 3. Enter your API key and select your language
-4. Adjust analysis thresholds and caching to your preference
+4. Choose your AI provider (Perplexity is the only built-in; others can be added via `src/providers/`)
+5. Adjust analysis thresholds and caching to your preference
 
 ## Commands
 
@@ -46,7 +49,8 @@ Download `main.js`, `styles.css`, and `manifest.json` from the [latest release](
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| API Key | — | Your Perplexity API key |
+| API Key | — | Your AI provider API key |
+| AI Provider | Perplexity | Select which provider to use |
 | Language | English | Primary language for spell checking |
 | Spell Check Model | `sonar` | Model used for error detection |
 | Enhanced Rewrite Model | `sonar-reasoning-pro` | Model used for text enhancement |
